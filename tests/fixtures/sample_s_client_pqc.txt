@@ -1,0 +1,23 @@
+Connected to 127.0.0.1
+---
+Certificate chain
+ 0 s:CN=localhost, O=QuantumGuard, OU=pqc-leaf
+   i:CN=QuantumGuard PQC Root CA (ML-DSA-87), O=QuantumGuard
+---
+Server certificate
+-----BEGIN CERTIFICATE-----
+-----END CERTIFICATE-----
+subject=CN=localhost, O=QuantumGuard, OU=pqc-leaf
+issuer=CN=QuantumGuard PQC Root CA (ML-DSA-87), O=QuantumGuard
+---
+No client certificate CA names sent
+Peer signature type: mldsa65
+Negotiated TLS1.3 group: X25519MLKEM768
+---
+SSL handshake has read 4922 bytes and written 1648 bytes
+Verification: OK
+---
+New, TLSv1.3, Cipher is TLS_AES_256_GCM_SHA384
+Protocol: TLSv1.3
+Cipher: TLS_AES_256_GCM_SHA384
+---

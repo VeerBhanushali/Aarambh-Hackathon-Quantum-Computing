@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Quantum Guard — Post-Quantum Cryptography Assessment & Migration Platform (PS07)</title>
+  <link rel="stylesheet" href="/static/style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+</head>
+<body>
+  <!-- Top Navigation Bar -->
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-badge">PQC · PS07</span>
+      <div>
+        <h1>Quantum Guard</h1>
+        <div class="brand-sub">NIST FIPS 203 / 204 / 205 &amp; IR 8547 Assessment &amp; Migration Platform</div>
+      </div>
+    </div>
+
+    <nav class="nav-tabs" id="main-nav">
+      <button class="nav-btn active" data-tab="overview">Overview</button>
+      <button class="nav-btn" data-tab="discovery">Discovery &amp; CBOM</button>
+      <button class="nav-btn" data-tab="risk">Risk &amp; Mosca</button>
+      <button class="nav-btn" data-tab="migration">Migration Planner</button>
+      <button class="nav-btn" data-tab="pki">PKI &amp; Dual-Cert</button>
+      <button class="nav-btn" data-tab="hybrid">Hybrid Lab</button>
+      <button class="nav-btn" data-tab="benchmarks">Benchmarks</button>
+      <button class="nav-btn" data-tab="vault">Key Vault</button>
+      <button class="nav-btn" data-tab="timeline">NIST Timeline</button>
+    </nav>
+
+    <div class="top-actions">
+      <button class="btn btn-accent" id="btn-guided-demo" onclick="runGuidedDemo()">&#9654; Run Guided Demo</button>
+      <button class="btn btn-outline" id="btn-reset-demo" onclick="resetDemoUI()">&#128465; Reset Demo</button>
+      <a class="btn btn-outline" href="/api/report" target="_blank">Executive Report / PDF</a>
+    </div>
+  </header>
+
+  <!-- Runtime Capability Banner -->
+  <div class="cap-banner" id="cap-banner">
+    <span id="cap-text">Checking cryptographic runtime capabilities (OpenSSL 3.5+ / FIPS 203/204/205)...</span>
+    <div class="severity-legend">
+      <span>Severity Legend:</span>
+      <span class="badge sev-critical">Critical (&ge;80)</span>
+      <span class="badge sev-high">High (60-79)</span>
+      <span class="badge sev-medium">Medium (35-59)</span>
+      <span class="badge sev-low">Low (10-34)</span>
+      <span class="badge sev-ok">OK (&lt;10)</span>
+      <span class="badge badge-hndl">HNDL Urgent</span>
+    </div>
+  </div>
+
+  <!-- Guided Demo Live Step Banner -->
+  <div class="demo-progress-bar" id="demo-banner">
+    <span id="demo-step-text">Running Guided Demo...</span>
+    <span id="demo-step-pct">0%</span>
+  </div>
+
+  <main class="container">
+    <!-- ==================== 1. OVERVIEW SECTION ==================== -->
+    <section class="tab-section active" id="tab-overview">
+      <div class="section-header">
+        <div>
+          <h2>Security Dashboard &amp; Executive Overview</h2>
+          <p>Live readiness posture, asset risk heatmap, migration waves, and NIST PQC milestones.</p>
+        </div>
+        <div style="display:flex; gap:8px;">
+          <button class="btn btn-outline" onclick="refreshAll()">&#8635; Refresh Dashboard</button>
+        </div>
+      </div>
+
+      <div class="kpi-grid">
+        <div class="kpi-card">
+          <div class="kpi-label">Readiness Score (Before &rarr; After)</div>
+          <div class="kpi-value" id="kpi-readiness">0%</div>
+          <div class="kpi-sub" id="kpi-net-readiness">Network TLS: 0%</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Critical Findings</div>
+          <div class="kpi-value" style="color:var(--critical)" id="kpi-critical">0</div>
+          <div class="kpi-sub">Broken or high-exposure classical kex</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">HNDL-Urgent Assets</div>
+          <div class="kpi-value" style="color:var(--high)" id="kpi-hndl">0</div>
+          <div class="kpi-sub">Secrecy + Migration &gt; CRQC years</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Auto-Fix Migration Progress</div>
+          <div class="kpi-value" style="color:var(--ok)" id="kpi-migration">0%</div>
+          <div class="kpi-sub" id="kpi-migration-sub">0 / 0 plan items</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">PQC Certificates Issued</div>
+          <div class="kpi-value" style="color:var(--primary)" id="kpi-pqc-certs">0</div>
+          <div class="kpi-sub">ML-DSA-87 / ML-DSA-65 / SLH-DSA</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Keys in Encrypted Vault</div>
+          <div class="kpi-value" id="kpi-keys-due">0</div>
+          <div class="kpi-sub" id="kpi-keys-sub">AES-256-GCM at rest</div>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="card">
+          <h3>Asset Risk Heatmap (Key Exchange · Signature · Symmetric · Protocol)</h3>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Asset / Service</th>
+                  <th>Key Exchange</th>
+                  <th>Signature / Auth</th>
+                  <th>Symmetric / Hash</th>
+                  <th>Protocol</th>
+                </tr>
+              </thead>
+              <tbody id="heatmap-tbody">
+                <tr><td colspan="5">Run a discovery scan or click "Run Guided Demo" to populate the heatmap.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>Migration Progress by Wave &amp; Severity Breakdown</h3>
+          <div class="chart-box">
+            <canvas id="chart-overview-waves"></canvas>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== 2. DISCOVERY & CBOM SECTION ==================== -->
+    <section class="tab-section" id="tab-discovery">
+      <div class="section-header">
+        <div>
+          <h2>Cryptographic Discovery &amp; CycloneDX CBOM</h2>
+          <p>Live OpenSSL 3.5+ network TLS probing, AST/regex source-code scanning, and X.509 certificate/key inspection.</p>
+        </div>
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+          <button class="btn btn-outline" onclick="startEnterprise(true)">Reset &amp; Start 5 Services</button>
+          <button class="btn btn-outline" onclick="stopEnterprise()">Stop Services</button>
+          <button class="btn" onclick="triggerScan('before')">&#128269; Run Discovery Scan (Before)</button>
+          <button class="btn btn-success" onclick="triggerScan('after')">&#128269; Run Verification Scan (After)</button>
+          <a class="btn btn-accent" id="btn-cbom-download" href="/api/cbom/1" target="_blank">&#11015; Download CBOM JSON</a>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Simulated Enterprise TLS Services (openssl s_server)</h3>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Service Name</th>
+                <th>Port</th>
+                <th>Exposure</th>
+                <th>Data Secrecy Shelf-Life</th>
+                <th>Active TLS / PQC Profile</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="enterprise-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>
+          <span>Discovered Cryptographic Assets (<span id="assets-count">0</span>)</span>
+          <select id="asset-source-filter" style="width:200px;" onchange="loadAssets()">
+            <option value="all">All Sources</option>
+            <option value="network">Network TLS</option>
+            <option value="code">Source Code</option>
+            <option value="certificate">Certificates</option>
+            <option value="key">Private Keys</option>
+          </select>
+        </h3>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Source</th>
+                <th>Location</th>
+                <th>Algorithm</th>
+                <th>Family</th>
+                <th>Usage</th>
+                <th>Protocol</th>
+                <th>Details</th>
+              </tr>
+            </thead>
+            <tbody id="assets-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== 3. RISK & MOSCA SECTION ==================== -->
+    <section class="tab-section" id="tab-risk">
+      <div class="section-header">
+        <div>
+          <h2>Quantum Vulnerability Assessment &amp; Mosca Shelf-Life Engine</h2>
+          <p>NIST IR 8547 deprecation rules (2030/2035) and Harvest-Now-Decrypt-Later (HNDL) urgency scoring.</p>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="card">
+          <h3>Mosca Shelf-Life Assumptions (X + Y &gt; Z &rArr; HNDL Urgent)</h3>
+          <p style="font-size:0.83rem; color:var(--text-muted); margin-bottom:14px;">
+            An asset is flagged <b>HNDL Urgent</b> when <code>data_secrecy_years + migration_years &gt; years_to_crqc</code>.
+            Applied strictly to key-establishment assets (signatures are not exposed to passive HNDL).
+          </p>
+          <div class="slider-group">
+            <label>
+              <span>Estimated Years to Cryptanalytically Relevant Quantum Computer (Z):</span>
+              <b id="lbl-crqc">10 years</b>
+            </label>
+            <input type="range" id="slider-crqc" min="3" max="25" value="10" oninput="document.getElementById('lbl-crqc').textContent=this.value+' years'" onchange="updateAssumptions()" />
+          </div>
+          <div class="slider-group">
+            <label>
+              <span>Enterprise Migration Duration (Y):</span>
+              <b id="lbl-mig">3 years</b>
+            </label>
+            <input type="range" id="slider-mig" min="1" max="10" value="3" oninput="document.getElementById('lbl-mig').textContent=this.value+' years'" onchange="updateAssumptions()" />
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>Findings by Severity</h3>
+          <div class="chart-box" style="height:190px;">
+            <canvas id="chart-risk-severity"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Vulnerability Findings &amp; NIST IR 8547 Status</h3>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Asset Location</th>
+                <th>Source / Usage</th>
+                <th>Algorithm</th>
+                <th>Score &amp; Severity</th>
+                <th>HNDL Check</th>
+                <th>NIST IR 8547 Status</th>
+                <th>Assessment Rationale</th>
+              </tr>
+            </thead>
+            <tbody id="findings-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== 4. MIGRATION PLANNER SECTION ==================== -->
+    <section class="tab-section" id="tab-migration">
+      <div class="section-header">
+        <div>
+          <h2>Post-Quantum Migration Planner</h2>
+          <p>Prioritized 3-wave roadmap, one-click auto-reconfiguration for network services, and before/after verification.</p>
+        </div>
+        <div style="display:flex; gap:8px;">
+          <button class="btn btn-outline" onclick="buildPlan()">Build / Refresh Plan</button>
+          <button class="btn btn-success" onclick="applyMigrationPlan()">&#9889; Apply Auto-Fixable Network Items</button>
+          <button class="btn btn-accent" onclick="triggerScan('after')">&#128269; Rescan ("After") &amp; Compare</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Auto-Applicable Network Migration Progress (<span id="plan-progress-lbl">0%</span>)</h3>
+        <div class="progress-outer">
+          <div class="progress-inner" id="plan-progress-bar" style="width:0%"></div>
+        </div>
+      </div>
+
+      <div class="card" id="compare-card">
+        <h3>Before vs. After Migration Verification</h3>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Asset Location</th>
+                <th>Usage</th>
+                <th>Before Algorithm</th>
+                <th>After Algorithm</th>
+                <th>Severity Change</th>
+                <th>Score Change</th>
+              </tr>
+            </thead>
+            <tbody id="compare-tbody">
+              <tr><td colspan="6">Click "Apply Auto-Fixable Network Items" then "Rescan (After)" to see live verification arrows.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Migration Plan by Wave (Wave 1: HNDL KEX &amp; Broken &rarr; Wave 2: PKI/Certs &rarr; Wave 3: Code &amp; SLH-DSA Roots)</h3>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Rank / Wave</th>
+                <th>Location</th>
+                <th>Current</th>
+                <th>Recommended Target &amp; Standard</th>
+                <th>Effort</th>
+                <th>Rationale &amp; Crypto-Agility Guidance</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="plan-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== 5. PKI & DUAL-CERT SECTION ==================== -->
+    <section class="tab-section" id="tab-pki">
+      <div class="section-header">
+        <div>
+          <h2>PKI &amp; Dual-Certificate Migration</h2>
+          <p>Classical ECDSA P-384 Root CA, PQC ML-DSA-87 Root CA, SLH-DSA Root CA, leaf issuance, and dual-cert serving.</p>
+        </div>
+        <div style="display:flex; gap:8px;">
+          <button class="btn" onclick="initPKI()">Initialize Classical &amp; PQC CAs</button>
+          <button class="btn btn-accent" onclick="runDualCertDemo()">&#9889; Run Dual-Certificate Demo</button>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="card">
+          <h3>Dual-Certificate Serving Proof (Same Server, Legacy vs. PQC Client)</h3>
+          <p style="font-size:0.83rem; color:var(--text-muted); margin-bottom:12px;">
+            Server runs <code>openssl s_server -cert classical.crt -dcert pqc_mldsa65.crt -groups X25519MLKEM768:X25519</code>.
+            Legacy clients get ECDSA; PQC-capable clients get ML-DSA-65.
+          </p>
+          <div class="grid-2" id="dual-cert-cards" style="grid-template-columns:1fr 1fr; gap:12px; margin-bottom:0;">
+            <div class="kpi-card">
+              <div class="kpi-label">Client A: Classical Restricted</div>
+              <div id="dc-old-body" style="font-size:0.84rem; margin-top:8px; color:var(--text-muted);">Click "Run Dual-Certificate Demo"</div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-label">Client B: PQC-Capable Default</div>
+              <div id="dc-new-body" style="font-size:0.84rem; margin-top:8px; color:var(--text-muted);">Click "Run Dual-Certificate Demo"</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>Issue Leaf Certificate &amp; Size Comparison</h3>
+          <div style="display:flex; gap:8px; margin-bottom:14px;">
+            <input type="text" id="pki-issue-name" placeholder="Leaf name (e.g. billing-svc)" value="billing-svc" />
+            <select id="pki-issue-alg">
+              <option value="ML-DSA-65">ML-DSA-65 (PQC Root CA)</option>
+              <option value="ECDSA-P256">ECDSA-P256 (Classical Root CA)</option>
+            </select>
+            <button class="btn" onclick="issueCertUI()">Issue Leaf</button>
+          </div>
+          <div id="cert-size-comparison" style="font-size:0.88rem; color:var(--text-muted);"></div>
+          <div style="margin-top:12px;">
+            <label style="font-size:0.82rem; color:var(--text-muted);">Rotate Active Enterprise Service Certificate:</label>
+            <div style="display:flex; gap:6px; margin-top:6px; flex-wrap:wrap;">
+              <button class="btn btn-outline btn-sm" onclick="rotateServiceCert('legacy-web')">Rotate legacy-web</button>
+              <button class="btn btn-outline btn-sm" onclick="rotateServiceCert('customer-api')">Rotate customer-api</button>
+              <button class="btn btn-outline btn-sm" onclick="rotateServiceCert('payments-core')">Rotate payments-core</button>
+              <button class="btn btn-outline btn-sm" onclick="rotateServiceCert('hr-records')">Rotate hr-records</button>
+              <button class="btn btn-outline btn-sm" onclick="rotateServiceCert('pqc-pilot')">Rotate pqc-pilot</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Certificate Inventory &amp; Chain Verification</h3>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Issuing CA</th>
+                <th>Key Algorithm</th>
+                <th>Signature Algorithm</th>
+                <th>DER Size</th>
+                <th>Valid Until</th>
+                <th>Status</th>
+                <th>Verify Chain</th>
+              </tr>
+            </thead>
+            <tbody id="pki-certs-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== 6. HYBRID LAB SECTION ==================== -->
+    <section class="tab-section" id="tab-hybrid">
+      <div class="section-header">
+        <div>
+          <h2>Hybrid Encryption Combiner &amp; TLS Policy Lab</h2>
+          <p>Live X25519 + ML-KEM-768 &rarr; HKDF-SHA256 (transcript-bound) &rarr; AES-256-GCM and live TLS policy verification.</p>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="card">
+          <h3>Interactive Application-Level Hybrid KEM Demo</h3>
+          <div style="margin-bottom:10px;">
+            <label style="font-size:0.82rem; color:var(--text-muted);">Plaintext Message to Encrypt:</label>
+            <input type="text" id="hybrid-msg" value="SWIFT Wire #9941: Transfer $25,000,000 — Protect against Harvest-Now-Decrypt-Later" style="margin-top:4px;" />
+          </div>
+          <div style="display:flex; gap:10px; align-items:center; margin-bottom:14px;">
+            <select id="hybrid-mode" style="width:260px;">
+              <option value="hybrid">Hybrid Mode (X25519 + ML-KEM-768)</option>
+              <option value="classical">Classical-Only Mode (X25519 Alone)</option>
+            </select>
+            <button class="btn" onclick="runHybridLab()">&#128274; Encrypt, Combine &amp; Decrypt</button>
+          </div>
+          <div id="hybrid-summary-box"></div>
+          <div id="hybrid-steps-list" style="margin-top:12px;"></div>
+        </div>
+
+        <div class="card">
+          <h3>
+            <span>TLS 1.3 Policy Verification Tests (Fallback · Strict PQC · Hybrid)</span>
+            <button class="btn btn-accent btn-sm" onclick="runPolicyTestsUI()">&#9654; Run 3 Policy Tests</button>
+          </h3>
+          <div id="policy-tests-container">
+            <p style="color:var(--text-muted); font-size:0.85rem;">Click "Run 3 Policy Tests" to execute live OpenSSL s_client probes against Classical Fallback, Strict PQC-Only, and Hybrid TLS endpoints.</p>
+          </div>
+
+          <h3 style="margin-top:20px;">Why Hybrid Combiners Defeat "Harvest Now, Decrypt Later"</h3>
+          <div id="hndl-explanation-box" style="font-size:0.85rem; color:var(--text-muted); background:var(--bg-elevated); padding:12px; border-radius:8px;">
+            Run the Hybrid KEM demo on the left to inspect transcript overhead and SHA-256 shared-secret fingerprints.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== 7. BENCHMARKS SECTION ==================== -->
+    <section class="tab-section" id="tab-benchmarks">
+      <div class="section-header">
+        <div>
+          <h2>Empirical Performance &amp; Size Benchmarks</h2>
+          <p>Latency (median/p95/CPU), public key &amp; ciphertext/signature sizes, and live TLS 1.3 handshake timings.</p>
+        </div>
+        <div style="display:flex; gap:8px; align-items:center;">
+          <input type="text" id="bench-n" value="40" style="width:80px;" title="Iterations" />
+          <button class="btn" id="btn-run-bench" onclick="triggerBenchmarks()">&#9201; Run Live Benchmarks</button>
+          <a class="btn btn-outline" id="btn-bench-csv" href="#" target="_blank">&#11015; Export CSV</a>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Computed Key Takeaways &amp; Machine Specifications</h3>
+        <div id="bench-machine-info" style="font-size:0.82rem; color:var(--text-muted); margin-bottom:8px;"></div>
+        <ul id="bench-takeaways" style="padding-left:20px; font-size:0.88rem; color:#e2e8f0;"></ul>
+      </div>
+
+      <div class="grid-2">
+        <div class="card">
+          <h3>Primary Fair Latency Comparison: In-Process <code>openssl speed</code> (ms per op — Log Scale)</h3>
+          <div class="chart-box">
+            <canvas id="chart-bench-latency"></canvas>
+          </div>
+        </div>
+        <div class="card">
+          <h3>Exact Public Key vs. Ciphertext / Signature Size (Bytes — Log Scale)</h3>
+          <div class="chart-box">
+            <canvas id="chart-bench-sizes"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Primary Benchmark Table: In-Process <code>openssl speed</code> (Classical &amp; PQC Measured by Same C Engine)</h3>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Algorithm &amp; Operation</th>
+                <th>Category</th>
+                <th>Throughput (ops/sec)</th>
+                <th>Latency (ms/op)</th>
+                <th>Est. p95 (ms)</th>
+                <th>CPU (ms/op)</th>
+                <th>Public Key (B)</th>
+                <th>Ciphertext / Sig (B)</th>
+                <th>Measurement Method</th>
+              </tr>
+            </thead>
+            <tbody id="bench-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Secondary Benchmark Table: End-to-End TLS 1.3 Handshakes &amp; Python <code>cryptography</code></h3>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Operation / Profile</th>
+                <th>Category</th>
+                <th>Iterations (N)</th>
+                <th>Median (ms)</th>
+                <th>p95 (ms)</th>
+                <th>CPU Median (ms)</th>
+                <th>Key Share / PubKey (B)</th>
+                <th>Wire / Ciphertext (B)</th>
+                <th>Measurement Method &amp; Notes</th>
+              </tr>
+            </thead>
+            <tbody id="bench-secondary-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== 8. KEY VAULT SECTION ==================== -->
+    <section class="tab-section" id="tab-vault">
+      <div class="section-header">
+        <div>
+          <h2>Secure Key Vault &amp; Audit Log</h2>
+          <p>AES-256-GCM encryption at rest, chmod 600 enforcement, rotation schedule, zero private-key API exposure, and immutable audit trail.</p>
+        </div>
+        <button class="btn btn-outline" onclick="loadVaultAndAudit()">&#8635; Refresh Vault</button>
+      </div>
+
+      <div class="card" style="border-left: 4px solid var(--primary);">
+        <div id="vault-notice" style="font-size:0.88rem;">
+          All generated private keys are encrypted at rest with AES-256-GCM (<code>.enc</code>) using <code>QG_MASTER_KEY</code> / <code>data/.master_key</code> (chmod 600). Private key material is never returned by any API endpoint.
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Encrypted Key Inventory</h3>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Key Name</th>
+                <th>Algorithm</th>
+                <th>Purpose</th>
+                <th>Created At</th>
+                <th>Rotate By</th>
+                <th>At-Rest Encryption</th>
+                <th>Status</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="vault-keys-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Cryptographic Audit Log</h3>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Timestamp (UTC)</th>
+                <th>Actor</th>
+                <th>Action</th>
+                <th>Target</th>
+                <th>Detail</th>
+              </tr>
+            </thead>
+            <tbody id="audit-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== 9. TIMELINE SECTION ==================== -->
+    <section class="tab-section" id="tab-timeline">
+      <div class="section-header">
+        <div>
+          <h2>NIST Post-Quantum Standardization &amp; IR 8547 Transition Timeline</h2>
+          <p>Key milestones governing enterprise migration from RSA/ECC to FIPS 203, 204, and 205.</p>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="timeline">
+          <div class="tl-item">
+            <div class="tl-dot"></div>
+            <h4>August 2024 — NIST Publishes Final PQC Standards (FIPS 203, FIPS 204, FIPS 205)</h4>
+            <p style="color:var(--text-muted); font-size:0.88rem;">
+              <b>FIPS 203 (ML-KEM)</b> for general key encapsulation, <b>FIPS 204 (ML-DSA)</b> for lattice-based digital signatures, and <b>FIPS 205 (SLH-DSA)</b> for stateless hash-based signatures.
+            </p>
+          </div>
+          <div class="tl-item">
+            <div class="tl-dot"></div>
+            <h4>March 2025 — NIST Selects HQC as Backup KEM &amp; April 2025 OpenSSL 3.5.0 Released</h4>
+            <p style="color:var(--text-muted); font-size:0.88rem;">
+              Hamming Quasi-Cyclic (HQC) selected as code-based backup to ML-KEM. OpenSSL 3.5.0 ships native ML-KEM, ML-DSA, SLH-DSA, and default hybrid group <code>X25519MLKEM768</code>.
+            </p>
+          </div>
+          <div class="tl-item today">
+            <div class="tl-dot"></div>
+            <h4>October 2026 &amp; TODAY — NIST IR 8547 Finalized &amp; Active Enterprise PQC Migration Window</h4>
+            <p style="color:#86efac; font-size:0.88rem;">
+              <b>You are here.</b> NIST IR 8547 (<i>Transition to Post-Quantum Cryptography Standards</i>) finalized (Oct 2026); FN-DSA (FIPS 206) progressing. Immediate priority: eliminate HNDL exposure on long-shelf-life data by deploying <code>X25519MLKEM768</code> hybrid TLS 1.3 and building internal PQC PKI.
+            </p>
+          </div>
+          <div class="tl-item warn">
+            <div class="tl-dot"></div>
+            <h4>After 2030 — Classical Public-Key Algorithms DEPRECATED (NIST IR 8547)</h4>
+            <p style="color:var(--text-muted); font-size:0.88rem;">
+              RSA-2048/3072, ECDSA P-256/P-384, ECDH, X25519-only, Ed25519, DH, and DSA are officially <b>deprecated</b> by NIST IR 8547.
+            </p>
+          </div>
+          <div class="tl-item crit">
+            <div class="tl-dot"></div>
+            <h4>After 2035 — Classical Public-Key Algorithms DISALLOWED (NIST IR 8547)</h4>
+            <p style="color:var(--text-muted); font-size:0.88rem;">
+              Unprotected classical asymmetric algorithms are <b>disallowed</b>. Note: Hybrid modes pairing an approved PQC algorithm (e.g., ML-KEM-768) with a classical algorithm remain permitted for defense-in-depth.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div id="toast-container"></div>
+  <script src="/static/app.js"></script>
+</body>
+</html>
