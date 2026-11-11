@@ -265,12 +265,25 @@ def apply_plan() -> Dict[str, Any]:
             if item.get("exposure") == "internal":
                 target_prof = "hybrid_mlkem_mldsa"
             applied_services[svc_name] = target_prof
-            item["status"] = "applied"
 
     reconfigured_list: List[Dict[str, Any]] = []
+    outcome: Dict[str, Dict[str, Any]] = {}
     for svc_name, prof in applied_services.items():
         res = reconfigure(svc_name, prof, actor="planner_auto_apply")
         reconfigured_list.append(res)
+        outcome[svc_name] = res
+
+    # Only count an item as applied if its service actually came back up on the new profile.
+    for item in items:
+        res = outcome.get(item.get("service") or "")
+        if not (item.get("auto_applicable") and res):
+            continue
+        if res.get("running") and not res.get("error"):
+            item["status"] = "applied"
+            item.pop("apply_error", None)
+        else:
+            item["status"] = "failed"
+            item["apply_error"] = res.get("error") or "service did not start on the new profile"
 
     if plan.get("plan_id"):
         conn = get_conn()

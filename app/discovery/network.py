@@ -99,22 +99,37 @@ def parse_s_client_output(raw: str) -> Dict[str, Any]:
     elif "ECDHE" in c_up:
         kex_alg = "ECDH-P256"
 
-    # Normalize peer signature / authentication algorithm
-    sig_alg = "unknown"
-    ps_up = peer_sig.upper()
-    cs_up = cert_info.get("cert_sig_alg", "").upper()
+    # Normalize peer signature / authentication algorithm.
+    # The server's own key is what authenticates the session: use the negotiated peer signature type
+    # first, then the leaf's public-key algorithm. The certificate's *signature* algorithm belongs to
+    # the issuing CA (e.g. an ML-DSA-65 leaf signed by an ML-DSA-87 root) and is only a last resort.
+    ps_up = peer_sig.upper().replace("-", "").replace("_", "")
     cpk_up = cert_info.get("cert_pubkey_alg", "").upper()
-    if "MLDSA87" in ps_up or "ML-DSA-87" in ps_up or "ML-DSA-87" in cs_up:
-        sig_alg = "ML-DSA-87"
-    elif "MLDSA65" in ps_up or "ML-DSA-65" in ps_up or "ML-DSA-65" in cs_up or "ML-DSA-65" in cpk_up:
-        sig_alg = "ML-DSA-65"
-    elif "MLDSA44" in ps_up or "ML-DSA-44" in ps_up or "ML-DSA-44" in cs_up:
-        sig_alg = "ML-DSA-44"
-    elif "SLH-DSA" in ps_up or "SLH-DSA" in cs_up:
-        sig_alg = "SLH-DSA-SHA2-128s"
-    elif "ECDSA" in ps_up or "ECDSA" in cs_up or "ID-ECPUBLICKEY" in cpk_up:
-        sig_alg = "ECDSA-P256"
-    elif "RSA" in ps_up or "RSA" in cs_up or "RSA" in c_up or "RSAENCRYPTION" in cpk_up:
+    cs_up = cert_info.get("cert_sig_alg", "").upper()
+    cpk_n = cpk_up.replace("-", "").replace("_", "")
+
+    def _classify(token: str) -> str:
+        for lvl in ("44", "65", "87"):
+            if f"MLDSA{lvl}" in token:
+                return f"ML-DSA-{lvl}"
+        if "SLHDSA" in token:
+            return "SLH-DSA-SHA2-128s"
+        if "ED25519" in token:
+            return "Ed25519"
+        if "ECDSA" in token or "IDECPUBLICKEY" in token:
+            if "384" in token:
+                return "ECDSA-P384"
+            return "ECDSA-P256"
+        if "RSA" in token:
+            return "RSA-3072" if cert_info.get("cert_bits") == "3072" else "RSA-2048"
+        return "unknown"
+
+    sig_alg = _classify(ps_up)
+    if sig_alg == "unknown":
+        sig_alg = _classify(cpk_n)
+    if sig_alg == "unknown":
+        sig_alg = _classify(cs_up.replace("-", "").replace("_", ""))
+    if sig_alg == "unknown" and "RSA" in c_up:
         sig_alg = "RSA-2048"
 
     # Normalize symmetric cipher

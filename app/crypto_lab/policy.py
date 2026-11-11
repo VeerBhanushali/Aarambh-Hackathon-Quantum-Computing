@@ -9,7 +9,7 @@ from typing import Any, Dict, List
 from app.config import OPENSSL_BIN
 from app.db import log_audit
 from app.discovery.network import parse_s_client_output
-from app.enterprise import _is_port_open, build_profile_args, start_all
+from app.enterprise import _is_port_open, build_profile_args, spawn_tls_server, start_all, stop_process
 
 
 def _run_s_client(port: int, extra_args: List[str]) -> str:
@@ -72,31 +72,17 @@ def run_policy_tests() -> Dict[str, Any]:
     # 3. Strict PQC Policy Test: Classical-only client (-groups X25519) connecting to a strict `pqc_only_mldsa` server is REJECTED
     strict_port = 9448
     strict_args = build_profile_args("pqc_only_mldsa", strict_port)
-    proc = subprocess.Popen(
-        strict_args,
-        stdin=subprocess.DEVNULL,
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
-    )
+    proc = spawn_tls_server(strict_args, strict_port)
     try:
-        for _ in range(15):
-            if _is_port_open(strict_port):
-                break
-            time.sleep(0.08)
-
+        server_up = _is_port_open(strict_port)
         out_strict = _run_s_client(strict_port, ["-tls1_3", "-groups", "X25519"])
         parsed_strict = parse_s_client_output(out_strict)
-        # Should fail handshake because server only accepts X25519MLKEM768
-        strict_pass = not parsed_strict["connected"]
+        # Control: a PQC client MUST be accepted, proving the rejection is the policy, not a dead server.
+        out_strict_ok = _run_s_client(strict_port, ["-tls1_3", "-groups", "X25519MLKEM768"])
+        parsed_strict_ok = parse_s_client_output(out_strict_ok)
+        strict_pass = server_up and parsed_strict_ok["connected"] and not parsed_strict["connected"]
     finally:
-        try:
-            proc.terminate()
-            proc.wait(timeout=2.0)
-        except Exception:
-            try:
-                proc.kill()
-            except Exception:
-                pass
+        stop_process(proc)
 
     results = [
         {
@@ -111,11 +97,13 @@ def run_policy_tests() -> Dict[str, Any]:
         {
             "id": "strict_pqc_policy",
             "title": "2. Strict PQC-Only Policy Enforcement Test",
-            "description": "Classical-only client (-groups X25519) connecting to strict `pqc_only_mldsa` service is rejected.",
+            "description": "Classical-only client (-groups X25519) connecting to strict `pqc_only_mldsa` service is rejected, while a control X25519MLKEM768 client is accepted.",
             "passed": strict_pass,
             "negotiated_group": "REJECTED (Handshake Failure)" if strict_pass else parsed_strict.get("group", "unknown"),
             "peer_signature_type": "none",
-            "raw_lines": _relevant_lines(out_strict) or ["SSL alert number 40: handshake failure (no shared group)"],
+            "raw_lines": _relevant_lines(out_strict) or ["(no handshake output captured)"],
+            "control_pqc_client_accepted": parsed_strict_ok["connected"],
+            "control_pqc_client_group": parsed_strict_ok.get("group", "unknown"),
         },
         {
             "id": "hybrid_confirmation",

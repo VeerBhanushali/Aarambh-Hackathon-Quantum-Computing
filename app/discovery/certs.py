@@ -9,6 +9,7 @@ from typing import Any, Dict, List
 
 from app.config import CERTS_DIR, OPENSSL_BIN, PKI_DIR, lookup_algorithm
 from app.db import get_conn
+from app.vault import get_key_alg_by_filename
 
 
 def _inspect_cert_file(path: Path) -> Dict[str, Any]:
@@ -38,8 +39,11 @@ def _inspect_cert_file(path: Path) -> Dict[str, Any]:
     bits = bits_m.group(1).strip() if bits_m else ""
     curve = curve_m.group(1).strip() if curve_m else ""
 
-    # Normalize key/signature algorithm to Algorithm Registry name
-    combined = f"{pk_raw} {sig_raw} {curve} {bits}".upper()
+    # Normalize to the Algorithm Registry name using the certificate's own PUBLIC KEY first
+    # (the signature algorithm is the issuer's, e.g. ML-DSA-87 root signing an ML-DSA-65 leaf).
+    combined = f"{pk_raw} {curve} {bits}".upper()
+    if "UNKNOWN" in combined.strip() or not pk_m:
+        combined = f"{pk_raw} {sig_raw} {curve} {bits}".upper()
     if "ML-DSA-87" in combined or "MLDSA87" in combined:
         alg = "ML-DSA-87"
     elif "ML-DSA-65" in combined or "MLDSA65" in combined:
@@ -53,9 +57,9 @@ def _inspect_cert_file(path: Path) -> Dict[str, Any]:
     elif "P-256" in combined or "PRIME256V1" in combined or "ECDSA" in combined or "ID-ECPUBLICKEY" in combined:
         alg = "ECDSA-P256"
     elif "RSA" in combined:
-        alg = "RSA-2048"
+        alg = "RSA-3072" if bits == "3072" else "RSA-2048"
     else:
-        alg = "RSA-2048"
+        alg = "unknown"
 
     return {
         "algorithm": alg,
@@ -72,6 +76,7 @@ def _inspect_cert_file(path: Path) -> Dict[str, Any]:
 def scan_certs_and_keys(scan_id: int) -> List[Dict[str, Any]]:
     """Scan data/certs/ and data/pki/ for X.509 certificates and private key files."""
     results: List[Dict[str, Any]] = []
+    seen_keys: set[str] = set()
     conn = get_conn()
     try:
         for folder in (CERTS_DIR, PKI_DIR):
@@ -101,25 +106,29 @@ def scan_certs_and_keys(scan_id: int) -> List[Dict[str, Any]]:
                     )
                     results.append({"id": cur.lastrowid, "source": "certificate", "location": location, "algorithm": alg})
 
-                elif path.suffix.lower() == ".key":
-                    name_low = path.name.lower()
-                    if "mldsa" in name_low or "pqc" in name_low:
-                        alg = "ML-DSA-87" if "root" in name_low else "ML-DSA-65"
-                    elif "slhdsa" in name_low:
-                        alg = "SLH-DSA-SHA2-128s"
-                    elif "classical_root" in name_low:
-                        alg = "ECDSA-P384"
-                    elif "ecdsa" in name_low or "classical" in name_low:
-                        alg = "ECDSA-P256"
-                    else:
-                        alg = "RSA-2048"
+                elif path.name.lower().endswith((".key", ".key.enc")):
+                    # Keys are stored encrypted (<name>.key.enc); report each logical key once.
+                    key_name = path.name[:-4] if path.name.lower().endswith(".enc") else path.name
+                    if key_name in seen_keys:
+                        continue
+                    seen_keys.add(key_name)
+                    # Algorithm comes from the vault's key inventory (recorded at generation time).
+                    alg = get_key_alg_by_filename(key_name) or "unknown"
+                    if alg == "unknown":
+                        name_low = key_name.lower()
+                        if "rsa" in name_low:
+                            alg = "RSA-2048"
+                        elif "ecdsa" in name_low:
+                            alg = "ECDSA-P256"
 
                     meta = lookup_algorithm(alg)
-                    location = f"{folder.name}/{path.name}"
-                    enc_exists = Path(str(path) + ".enc").exists()
+                    location = f"{folder.name}/{key_name}"
+                    enc_exists = (folder / (key_name + ".enc")).exists()
+                    plaintext_on_disk = (folder / key_name).exists()
                     details = {
-                        "filename": path.name,
+                        "filename": key_name,
                         "encrypted_at_rest": enc_exists,
+                        "plaintext_on_disk": plaintext_on_disk,
                         "file_bytes": path.stat().st_size,
                         "exposure": "internal",
                         "data_secrecy_years": 15,

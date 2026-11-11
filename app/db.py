@@ -26,6 +26,11 @@ def init_db() -> None:
     conn = get_conn()
     try:
         cur = conn.cursor()
+        # Migration: older schema forced p95_ms/cpu_ms NOT NULL, which pushed code into inventing values
+        # for `openssl speed` rows (which only report throughput). Benchmarks are re-measurable, so rebuild.
+        cols = cur.execute("PRAGMA table_info(benchmarks)").fetchall()
+        if any(c[1] == "p95_ms" and c[3] == 1 for c in cols):
+            cur.execute("DROP TABLE benchmarks")
         cur.executescript(
             """
             CREATE TABLE IF NOT EXISTS services (
@@ -109,8 +114,8 @@ def init_db() -> None:
                 category TEXT NOT NULL,
                 n INT NOT NULL,
                 median_ms REAL NOT NULL,
-                p95_ms REAL NOT NULL,
-                cpu_ms REAL NOT NULL,
+                p95_ms REAL,
+                cpu_ms REAL,
                 pubkey_bytes INT NOT NULL,
                 ct_or_sig_bytes INT NOT NULL,
                 note TEXT,

@@ -14,7 +14,7 @@ from pydantic import BaseModel
 
 from app.benchmark import export_benchmarks_csv, get_latest_benchmarks, run_benchmarks
 from app.capabilities import detect_capabilities
-from app.config import ALGORITHM_REGISTRY
+from app.config import ALGORITHM_REGISTRY, PKI_DIR
 from app.crypto_lab.hybrid import run_hybrid_demo
 from app.crypto_lab.policy import run_policy_tests
 from app.db import (
@@ -22,6 +22,7 @@ from app.db import (
     get_audit_logs,
     get_conn,
     init_db,
+    log_audit,
     query_all,
     query_one,
     set_assumptions,
@@ -35,6 +36,7 @@ from app.enterprise import (
     rotate_service_certificate,
     run_dual_cert_demo,
     start_all,
+    start_service,
     status as enterprise_status,
     stop_all,
 )
@@ -326,10 +328,31 @@ def api_vault_rotate(key_id: int) -> Dict[str, Any]:
 
     name = rec["name"]
     alg = rec["alg"]
-    # Delegate to PKI leaf issuance / rotation
-    leaf_name = name.replace("-key", "")
+    if rec["purpose"] == "root-ca":
+        return {
+            "error": True,
+            "message": "Root CA keys are rotated through an offline key ceremony (new root + cross-signing); "
+            "not automated in this demo. Leaf keys can be rotated here.",
+        }
+    leaf_name = name[: -len("-key")] if name.endswith("-key") else name
+    if not (PKI_DIR / f"{leaf_name}.crt").exists():
+        return {
+            "error": True,
+            "message": f"{name} is a bootstrap self-signed key; initialize the PKI and rotate its CA-issued leaf instead.",
+        }
+    # Delegate to PKI leaf issuance, then restart running services so they load the new leaf.
     issued = issue_leaf_certificate(leaf_name, alg)
-    return {"status": "rotated", "previous_key_id": key_id, "new_certificate": issued, "keys": list_keys()}
+    restarted = [svc["name"] for svc in enterprise_status() if svc["running"]]
+    for svc_name in restarted:
+        start_service(svc_name)
+    log_audit("vault", "rotate_key", name, f"Re-issued {leaf_name}; restarted {len(restarted)} running services")
+    return {
+        "status": "rotated",
+        "previous_key_id": key_id,
+        "new_certificate": issued,
+        "restarted_services": restarted,
+        "keys": list_keys(),
+    }
 
 
 @app.get("/api/audit")
@@ -392,6 +415,14 @@ def api_overview() -> Dict[str, Any]:
                 "wave_1": len(plan.get("waves", {}).get("wave_1", [])),
                 "wave_2": len(plan.get("waves", {}).get("wave_2", [])),
                 "wave_3": len(plan.get("waves", {}).get("wave_3", [])),
+            },
+            "wave_progress": {
+                w: {
+                    "applied": sum(1 for it in items if it.get("status") == "applied"),
+                    "failed": sum(1 for it in items if it.get("status") == "failed"),
+                    "pending": sum(1 for it in items if it.get("status") not in ("applied", "failed")),
+                }
+                for w, items in plan.get("waves", {}).items()
             },
         },
         "pqc_certificates_issued": pqc_certs,

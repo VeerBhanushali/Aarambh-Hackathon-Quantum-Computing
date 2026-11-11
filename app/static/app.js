@@ -60,6 +60,15 @@ async function loadStatus() {
   const c = data.capabilities;
   const banner = document.getElementById("cap-text");
   const okIcon = c.openssl_ge_35 ? "&#9989;" : "&#9888;&#65039;";
+  const deg = document.getElementById("cap-degraded");
+  if (deg) {
+    const missing = [];
+    if (!c.openssl_ge_35) missing.push(`OpenSSL is ${c.openssl_version} (needs 3.5+): hybrid TLS groups, ML-DSA/SLH-DSA CAs, dual-cert serving, policy tests and PQC benchmarks will fail. Set OPENSSL_BIN to an OpenSSL 3.5+ binary or use Docker.`);
+    else if (!c.openssl_mlkem || !c.openssl_mldsa) missing.push("This OpenSSL build lacks ML-KEM or ML-DSA; PQC features are degraded.");
+    if (!c.oqs_available && !c.openssl_mlkem) missing.push("No ML-KEM backend (liboqs-python or OpenSSL 3.5): Hybrid Lab only works in classical mode.");
+    deg.style.display = missing.length ? "block" : "none";
+    deg.innerHTML = missing.map((m) => `&#9888;&#65039; ${m}`).join("<br>");
+  }
   banner.innerHTML = `${okIcon} <b>Runtime:</b> ${c.openssl_version} | <b>ML-KEM:</b> ${c.openssl_mlkem ? "Enabled" : "No"} | <b>ML-DSA:</b> ${c.openssl_mldsa ? "Enabled" : "No"} | <b>SLH-DSA:</b> ${c.openssl_slhdsa ? "Enabled" : "No"} | <b>Backend:</b> ${c.pqc_backend}`;
 
   if (data.assumptions) {
@@ -94,7 +103,7 @@ async function loadOverview() {
   document.getElementById("kpi-keys-due").textContent = `${data.total_keys || 0} (${data.keys_due_for_rotation || 0} due)`;
 
   renderHeatmap(data.findings || []);
-  renderOverviewChart(plan.waves || {}, counts);
+  renderOverviewChart(plan.wave_progress || {});
 }
 
 function renderHeatmap(findings) {
@@ -132,48 +141,30 @@ function renderHeatmap(findings) {
     .join("");
 }
 
-function renderOverviewChart(waves, counts) {
+function renderOverviewChart(progress) {
   const ctx = document.getElementById("chart-overview-waves");
   if (!ctx || typeof Chart === "undefined") return;
   if (chartOverviewWaves) chartOverviewWaves.destroy();
+  const keys = ["wave_1", "wave_2", "wave_3"];
+  const val = (k, f) => (progress[k] ? progress[k][f] : 0);
 
   chartOverviewWaves = new Chart(ctx, {
     type: "bar",
     data: {
-      labels: ["Critical", "High", "Medium", "Low", "OK", "Wave 1 (HNDL)", "Wave 2 (PKI)", "Wave 3 (Code/SLH)"],
+      labels: ["Wave 1: HNDL key exchange + broken", "Wave 2: Certificates / PKI", "Wave 3: Code signing / long-lived"],
       datasets: [
-        {
-          label: "Asset & Migration Wave Count",
-          data: [
-            counts.critical || 0,
-            counts.high || 0,
-            counts.medium || 0,
-            counts.low || 0,
-            counts.ok || 0,
-            waves.wave_1 || 0,
-            waves.wave_2 || 0,
-            waves.wave_3 || 0,
-          ],
-          backgroundColor: [
-            "#ef4444",
-            "#f97316",
-            "#eab308",
-            "#38bdf8",
-            "#22c55e",
-            "#6366f1",
-            "#8b5cf6",
-            "#a855f7",
-          ],
-        },
+        { label: "Applied", data: keys.map((k) => val(k, "applied")), backgroundColor: "#22c55e" },
+        { label: "Apply failed", data: keys.map((k) => val(k, "failed")), backgroundColor: "#ef4444" },
+        { label: "Pending (manual / not yet applied)", data: keys.map((k) => val(k, "pending")), backgroundColor: "#64748b" },
       ],
     },
     options: {
       responsive: true,
       maintainAspectRatio: false,
-      plugins: { legend: { display: false } },
+      plugins: { legend: { labels: { color: "#f8fafc" } } },
       scales: {
-        y: { beginAtZero: true, ticks: { color: "#94a3b8" }, grid: { color: "#1e293b" } },
-        x: { ticks: { color: "#94a3b8" }, grid: { display: false } },
+        x: { stacked: true, ticks: { color: "#94a3b8" }, grid: { display: false } },
+        y: { stacked: true, beginAtZero: true, ticks: { color: "#94a3b8", precision: 0 }, grid: { color: "#1e293b" } },
       },
     },
   });
@@ -341,6 +332,8 @@ function renderPlan(plan) {
         ${
           it.status === "applied"
             ? '<span class="badge sev-ok">APPLIED</span>'
+            : it.status === "failed"
+            ? `<span class="badge sev-critical" title="${escapeHtml(it.apply_error || "")}">APPLY FAILED</span>`
             : it.auto_applicable
             ? '<span class="badge sev-medium">AUTO-READY</span>'
             : '<span class="badge sev-low">MANUAL CODE/PKI</span>'
@@ -481,17 +474,26 @@ async function runDualCertDemo() {
 async function runHybridLab() {
   const message = document.getElementById("hybrid-msg").value;
   const mode = document.getElementById("hybrid-mode").value;
-  const res = await apiFetch("/api/lab/hybrid", {
+  const tamperEl = document.getElementById("hybrid-tamper");
+  const tamper = !!(tamperEl && tamperEl.checked);
+  // Called directly (not apiFetch): a tampered run legitimately returns success=false with an error reason.
+  const raw = await fetch("/api/lab/hybrid", {
     method: "POST",
-    body: JSON.stringify({ message, mode }),
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ message, mode, tamper }),
   });
+  const res = await raw.json();
+  if (!raw.ok || res.error === true) {
+    showToast(`Hybrid Lab: ${res.message || "HTTP " + raw.status}`, true);
+    return;
+  }
 
   const sb = document.getElementById("hybrid-summary-box");
   sb.innerHTML = `
     <div class="kpi-card" style="border-color: ${res.success ? "var(--ok)" : "var(--critical)"};">
       <div style="display:flex; justify-content:space-between; align-items:center;">
         <span class="badge ${res.success ? "sev-ok" : "sev-critical"}">
-          ${res.success ? "&#10004; DECRYPTED &amp; AUTHENTICATED" : "FAILED"}
+          ${res.success ? "&#10004; DECRYPTED &amp; AUTHENTICATED" : "&#10008; REJECTED: " + escapeHtml(res.error || "FAILED")}
         </span>
         <span style="font-size:0.8rem; color:var(--text-muted);">Backend: <b>${res.backend}</b> | Total: <b>${res.timings_ms.total_ms} ms</b></span>
       </div>
@@ -574,6 +576,10 @@ async function triggerBenchmarks() {
   }
 }
 
+function fmtMs(v) {
+  return v === null || v === undefined ? '<span title="not measurable with this method">n/a</span>' : `${v} ms`;
+}
+
 function renderBenchmarks(data) {
   const allRows = data.benchmarks || [];
   const primaryRows = data.primary_openssl_speed || allRows;
@@ -586,7 +592,7 @@ function renderBenchmarks(data) {
   const mi = data.machine_info || {};
   const ts = data.created_at || mi.measured_at || "N/A";
   document.getElementById("bench-machine-info").innerHTML = mi.os
-    ? `<b>Measured At (UTC):</b> <code>${ts}</code> | <b>Run ID:</b> <code>${data.run_id}</code> | <b>Host Specs:</b> ${mi.os} · ${mi.cpu} (${mi.cores} cores) | <b>Python:</b> ${mi.python} | <b>Engine:</b> ${mi.openssl_version}`
+    ? `<b>Measured At (UTC):</b> <code>${ts}</code> | <b>Run ID:</b> <code>${data.run_id}</code> | <b>Host Specs:</b> ${mi.os} · ${mi.cpu_model || mi.cpu} (${mi.cores} cores) | <b>Python:</b> ${mi.python} | <b>Engine:</b> ${mi.openssl_version}`
     : "No benchmark run stored yet. Click 'Run Live Benchmarks' to measure on this machine.";
 
   document.getElementById("bench-takeaways").innerHTML = (data.takeaways || [])
@@ -601,8 +607,8 @@ function renderBenchmarks(data) {
       <td><span class="badge sev-ok">${r.category}</span></td>
       <td><b>${Number(r.n).toLocaleString()} /s</b></td>
       <td><b>${r.median_ms} ms</b></td>
-      <td>${r.p95_ms} ms</td>
-      <td>${r.cpu_ms} ms</td>
+      <td>${fmtMs(r.p95_ms)}</td>
+      <td>${fmtMs(r.cpu_ms)}</td>
       <td>${r.pubkey_bytes} B</td>
       <td>${r.ct_or_sig_bytes} B</td>
       <td style="font-size:0.78rem; color:var(--text-muted);">${r.note || ""}</td>
@@ -620,8 +626,8 @@ function renderBenchmarks(data) {
         <td><span class="badge sev-low">${r.category}</span></td>
         <td>${r.n}</td>
         <td><b>${r.median_ms} ms</b></td>
-        <td>${r.p95_ms} ms</td>
-        <td>${r.cpu_ms} ms</td>
+        <td>${fmtMs(r.p95_ms)}</td>
+        <td>${fmtMs(r.cpu_ms)}</td>
         <td>${r.pubkey_bytes} B</td>
         <td>${r.ct_or_sig_bytes} B</td>
         <td style="font-size:0.78rem; color:var(--text-muted);">${r.note || ""}</td>
@@ -819,7 +825,11 @@ async function runGuidedDemo() {
 
     await refreshAll();
     switchTab("overview");
-    setStep("Guided Demo Completed Successfully! Network TLS readiness jumped to 100%.", 100);
+    const cmp = await apiFetch("/api/compare");
+    setStep(
+      `Guided Demo complete. Network TLS readiness ${cmp.before_network_readiness}% &rarr; ${cmp.after_network_readiness}%, overall ${cmp.before_readiness}% &rarr; ${cmp.after_readiness}% (remaining items are code changes, not auto-applicable).`,
+      100
+    );
     showToast("Guided Demo completed end-to-end!");
   } catch (err) {
     setStep(`Error during Guided Demo: ${err.message}`, 100);

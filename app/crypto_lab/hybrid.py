@@ -168,6 +168,18 @@ def run_hybrid_demo(message: str, mode: str = "hybrid", tamper: bool = False) ->
         message = "Top-Secret Payment Instruction: Transfer $10,000,000 to Quantum Reserve."
 
     is_hybrid = mode.lower() != "classical"
+    if is_hybrid:
+        caps = detect_capabilities()
+        if not (caps.get("oqs_available") or caps.get("openssl_mlkem")):
+            return {
+                "error": True,
+                "success": False,
+                "message": (
+                    "ML-KEM-768 unavailable: install liboqs-python or point OPENSSL_BIN at OpenSSL 3.5+. "
+                    "Classical mode still works."
+                ),
+                "mode": "hybrid",
+            }
 
     # Step 1: Receiver static X25519 keypair
     t_x0 = time.perf_counter()

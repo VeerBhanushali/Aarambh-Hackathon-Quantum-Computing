@@ -1,7 +1,10 @@
 """Prompt 3, 4 & 5 Tests: PKI Chain Verification, Hybrid KEM Round-Trip/Tamper, and Zero Private Key Leak Check."""
 from __future__ import annotations
 
+import pytest
 from fastapi.testclient import TestClient
+
+from app.capabilities import detect_capabilities
 
 from app.config import PKI_DIR
 from app.crypto_lab.hybrid import run_hybrid_demo
@@ -9,8 +12,12 @@ from app.main import app
 from app.pki import init_pki, verify_chain
 
 client = TestClient(app)
+needs_pqc = pytest.mark.skipif(
+    not detect_capabilities().get("openssl_mldsa"), reason="needs OpenSSL 3.5+ with ML-KEM/ML-DSA (set OPENSSL_BIN)"
+)
 
 
+@needs_pqc
 def test_pki_chain_verifies_and_cross_ca_fails():
     init_pki()
     c_ca = PKI_DIR / "classical_root_ca.crt"
@@ -31,6 +38,7 @@ def test_pki_chain_verifies_and_cross_ca_fails():
     assert res_cross["verified"] is False
 
 
+@needs_pqc
 def test_hybrid_encryption_roundtrip_and_tamper_detection():
     msg = "Quantum Guard Secret Test Vector 2026"
     ok_res = run_hybrid_demo(msg, mode="hybrid", tamper=False)
@@ -66,6 +74,7 @@ def test_no_api_endpoint_ever_leaks_private_key():
         assert "PRIVATE KEY" not in resp.text.upper(), f"Private key leaked in {path}"
 
 
+@needs_pqc
 def test_fair_openssl_speed_benchmark_and_reset_demo():
     from app.benchmark import run_benchmarks
 

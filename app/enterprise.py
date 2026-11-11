@@ -8,10 +8,10 @@ import time
 from pathlib import Path
 from typing import Any, Dict, List, Tuple
 
-from app.config import CERTS_DIR, DEFAULT_SERVICES, OPENSSL_BIN, PKI_DIR
+from app.config import CERTS_DIR, DATA_DIR, DEFAULT_SERVICES, OPENSSL_BIN, PKI_DIR
 from app.db import get_conn, log_audit, query_all, query_one, utc_now_iso
 from app.pki import ensure_bootstrap_certs, init_pki, issue_leaf_certificate
-from app.vault import decrypt_key_to_temp
+from app.vault import key_available, materialize_keys
 
 # Active child processes keyed by service name
 _PROCESSES: Dict[str, subprocess.Popen] = {}
@@ -47,22 +47,56 @@ def _resolve_cert_and_key(kind: str) -> Tuple[Path, Path]:
     elif kind == "mldsa":
         pqc_crt = PKI_DIR / "pqc-leaf.crt"
         pqc_key = PKI_DIR / "pqc-leaf.key"
-        if not pqc_crt.exists():
+        if not pqc_crt.exists() or not key_available(pqc_key):
             init_pki()
+        if not pqc_crt.exists():
+            raise RuntimeError("ML-DSA leaf unavailable: OpenSSL 3.5+ with ML-DSA is required for this profile.")
         crt, key = pqc_crt, pqc_key
     else:  # ecdsa
         c_crt = PKI_DIR / "classical-leaf.crt"
         c_key = PKI_DIR / "classical-leaf.key"
-        if c_crt.exists() and c_key.exists():
+        if c_crt.exists() and key_available(c_key):
             crt, key = c_crt, c_key
         else:
             crt = CERTS_DIR / "ecdsa_p256.crt"
             key = CERTS_DIR / "ecdsa_p256.key"
-
-    enc = Path(str(key) + ".enc")
-    if enc.exists() and not key.exists():
-        decrypt_key_to_temp(enc, key)
     return crt, key
+
+
+def spawn_tls_server(args: List[str], port: int, wait_s: float = 3.0) -> subprocess.Popen:
+    """Start an `openssl s_server` child process with keys decrypted only during start-up.
+
+    CRYPTO RULE: keys referenced by -key/-dkey are decrypted from the vault, s_server loads them
+    into memory before binding the port, and the plaintext files are deleted once the port is open.
+    """
+    key_paths = [Path(args[i + 1]) for i, a in enumerate(args[:-1]) if a in ("-key", "-dkey")]
+    log_dir = DATA_DIR / "logs"
+    log_dir.mkdir(parents=True, exist_ok=True)
+    with materialize_keys(*key_paths), open(log_dir / f"s_server_{port}.log", "wb") as log_fh:
+        proc = subprocess.Popen(
+            args,
+            stdin=subprocess.DEVNULL,
+            stdout=subprocess.DEVNULL,
+            stderr=log_fh,
+        )
+        deadline = time.monotonic() + wait_s
+        while time.monotonic() < deadline:
+            if _is_port_open(port) or proc.poll() is not None:
+                break
+            time.sleep(0.05)
+    return proc
+
+
+def stop_process(proc: subprocess.Popen) -> None:
+    """Terminate a child process, killing it if it does not exit promptly."""
+    try:
+        proc.terminate()
+        proc.wait(timeout=2.0)
+    except Exception:
+        try:
+            proc.kill()
+        except Exception:
+            pass
 
 
 def build_profile_args(profile: str, port: int) -> List[str]:
@@ -172,24 +206,20 @@ def start_service(name: str) -> Dict[str, Any]:
     stop_service(name)
     port = int(row["port"])
     profile = str(row["profile"])
-    args = build_profile_args(profile, port)
-
-    proc = subprocess.Popen(
-        args,
-        stdin=subprocess.DEVNULL,
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
-    )
-    _PROCESSES[name] = proc
-
-    # Wait briefly for port to bind
-    for _ in range(15):
-        if _is_port_open(port):
-            break
-        time.sleep(0.08)
-
-    running = _is_port_open(port)
+    error = None
+    try:
+        args = build_profile_args(profile, port)
+        proc = spawn_tls_server(args, port)
+        _PROCESSES[name] = proc
+        running = _is_port_open(port)
+        if not running:
+            log_file = DATA_DIR / "logs" / f"s_server_{port}.log"
+            error = (log_file.read_text(errors="replace").strip()[:300] if log_file.exists() else "") or "s_server did not start"
+    except Exception as exc:  # e.g. profile needs ML-DSA but OpenSSL < 3.5
+        running = False
+        error = str(exc)
     return {
+        "error": error,
         "name": name,
         "port": port,
         "profile": profile,
@@ -203,14 +233,7 @@ def stop_service(name: str) -> None:
     """Stop a single enterprise service subprocess if running."""
     proc = _PROCESSES.pop(name, None)
     if proc is not None:
-        try:
-            proc.terminate()
-            proc.wait(timeout=2.0)
-        except Exception:
-            try:
-                proc.kill()
-            except Exception:
-                pass
+        stop_process(proc)
 
 
 def start_all() -> List[Dict[str, Any]]:
@@ -317,17 +340,10 @@ def run_dual_cert_demo() -> Dict[str, Any]:
     init_pki()
     demo_port = 9449
     args = build_profile_args("dual_cert_hybrid", demo_port)
-    proc = subprocess.Popen(
-        args,
-        stdin=subprocess.DEVNULL,
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
-    )
+    proc = spawn_tls_server(args, demo_port)
     try:
-        for _ in range(15):
-            if _is_port_open(demo_port):
-                break
-            time.sleep(0.08)
+        if not _is_port_open(demo_port):
+            raise RuntimeError("Dual-certificate s_server failed to start (needs OpenSSL 3.5+ with ML-DSA).")
 
         # Client A: Legacy/Classical client restricted to classical ECDSA signature algorithm & X25519 group
         cmd_old = [
@@ -393,11 +409,4 @@ def run_dual_cert_demo() -> Dict[str, Any]:
             },
         }
     finally:
-        try:
-            proc.terminate()
-            proc.wait(timeout=2.0)
-        except Exception:
-            try:
-                proc.kill()
-            except Exception:
-                pass
+        stop_process(proc)

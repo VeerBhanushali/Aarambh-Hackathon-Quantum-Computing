@@ -11,7 +11,7 @@ from typing import Any, Dict, List, Tuple
 from app.capabilities import detect_capabilities
 from app.config import CERTS_DIR, OPENSSL_BIN, PKI_DIR
 from app.db import get_conn, log_audit, query_all, query_one, utc_now_iso
-from app.vault import _chmod_600, register_key
+from app.vault import _chmod_600, key_available, materialize_keys, register_key
 
 
 def _run_cmd(args: List[str], timeout: float = 10.0) -> Tuple[int, str]:
@@ -93,7 +93,7 @@ def ensure_bootstrap_certs() -> None:
     ecdsa_key = CERTS_DIR / "ecdsa_p256.key"
     ecdsa_crt = CERTS_DIR / "ecdsa_p256.crt"
 
-    if not rsa_crt.exists() or not rsa_key.exists():
+    if not rsa_crt.exists() or not key_available(rsa_key):
         _run_cmd(
             [
                 "req",
@@ -123,7 +123,7 @@ def ensure_bootstrap_certs() -> None:
             rsa_crt,
         )
 
-    if not ecdsa_crt.exists() or not ecdsa_key.exists():
+    if not ecdsa_crt.exists() or not key_available(ecdsa_key):
         _run_cmd(
             [
                 "req",
@@ -156,8 +156,8 @@ def ensure_bootstrap_certs() -> None:
         )
 
 
-def init_pki() -> Dict[str, Any]:
-    """Initialize Classical Root CA (ECDSA P-384), PQC Root CA (ML-DSA-87), SLH-DSA Root CA, and issue default leaves."""
+def _ensure_cas() -> bool:
+    """Create the Root CAs that are missing. Returns True if the SLH-DSA CA is available."""
     PKI_DIR.mkdir(parents=True, exist_ok=True)
     caps = detect_capabilities()
 
@@ -270,14 +270,50 @@ def init_pki() -> Dict[str, Any]:
         else:
             slh_available = True
 
-    # Issue standard classical leaf and PQC leaf
-    c_leaf = issue_leaf_certificate("classical-leaf", "ECDSA-P256")
-    pqc_leaf = issue_leaf_certificate("pqc-leaf", "ML-DSA-65")
+    return slh_available
+
+
+def _existing_leaf(name: str) -> Dict[str, Any] | None:
+    """Return the active DB record for a leaf whose cert and (encrypted) key are already on disk."""
+    crt = PKI_DIR / f"{name}.crt"
+    if not crt.exists() or not key_available(PKI_DIR / f"{name}.key"):
+        return None
+    row = query_one("SELECT * FROM certificates WHERE name = ? AND status = 'active' ORDER BY id DESC LIMIT 1", (name,))
+    if not row:
+        return None
+    return {
+        "id": row["id"],
+        "name": name,
+        "ca_name": row["ca_name"],
+        "key_alg": row["key_alg"],
+        "sig_alg": row["sig_alg"],
+        "path": crt.name,
+        "der_bytes": _der_size(crt),
+        "reused": True,
+    }
+
+
+def init_pki() -> Dict[str, Any]:
+    """Initialize Classical Root CA (ECDSA P-384), PQC Root CA (ML-DSA-87), SLH-DSA Root CA, and default leaves.
+
+    Idempotent: existing CAs and leaves are reused (use rotate/issue to get fresh leaves).
+    """
+    caps = detect_capabilities()
+    slh_available = _ensure_cas()
+    c_ca_crt = PKI_DIR / "classical_root_ca.crt"
+    pqc_ca_crt = PKI_DIR / "pqc_root_ca.crt"
+
+    c_leaf = _existing_leaf("classical-leaf") or issue_leaf_certificate("classical-leaf", "ECDSA-P256")
+    pqc_leaf: Dict[str, Any] | None = None
+    if caps.get("openssl_mldsa") and pqc_ca_crt.exists():
+        pqc_leaf = _existing_leaf("pqc-leaf") or issue_leaf_certificate("pqc-leaf", "ML-DSA-65")
 
     return {
         "status": "initialized",
         "classical_ca": str(c_ca_crt.name),
-        "pqc_ca": str(pqc_ca_crt.name),
+        "pqc_ca": str(pqc_ca_crt.name) if pqc_ca_crt.exists() else None,
+        "pqc_available": pqc_leaf is not None,
+        "degraded_reason": None if pqc_leaf else "OpenSSL on this machine has no ML-DSA support (needs 3.5+); PQC CA skipped.",
         "slh_dsa_ca_available": slh_available,
         "classical_leaf": c_leaf,
         "pqc_leaf": pqc_leaf,
@@ -305,42 +341,50 @@ def issue_leaf_certificate(name: str, alg: str = "ML-DSA-65") -> Dict[str, Any]:
         ca_name = "PQC Root CA"
         ca_crt = PKI_DIR / "pqc_root_ca.crt"
         ca_key = PKI_DIR / "pqc_root_ca.key"
+        _ensure_cas()
         if not ca_crt.exists():
-            init_pki()
+            raise RuntimeError("PQC Root CA unavailable: this OpenSSL build has no ML-DSA support (needs 3.5+).")
         _run_cmd(["genpkey", "-algorithm", "ML-DSA-65", "-out", str(key_path)])
-        sig_alg = "ML-DSA-65"
+        sig_alg = "ML-DSA-87"  # the leaf is signed by the ML-DSA-87 root
     else:
         key_alg = "ECDSA-P256"
         ca_name = "Classical Root CA"
         ca_crt = PKI_DIR / "classical_root_ca.crt"
         ca_key = PKI_DIR / "classical_root_ca.key"
+        _ensure_cas()
         if not ca_crt.exists():
-            init_pki()
+            raise RuntimeError("Classical Root CA could not be created; check the openssl CLI.")
         _run_cmd(["genpkey", "-algorithm", "EC", "-pkeyopt", "ec_paramgen_curve:P-256", "-out", str(key_path)])
         sig_alg = "ecdsa-with-SHA256"
 
     _chmod_600(key_path)
     subj = f"/CN=localhost/O=QuantumGuard/OU={safe_name}"
-    _run_cmd(["req", "-new", "-key", str(key_path), "-out", str(csr_path), "-subj", subj])
-    _run_cmd(
-        [
-            "x509",
-            "-req",
-            "-in",
-            str(csr_path),
-            "-CA",
-            str(ca_crt),
-            "-CAkey",
-            str(ca_key),
-            "-CAcreateserial",
-            "-out",
-            str(crt_path),
-            "-days",
-            "90",
-            "-extfile",
-            str(ext_file),
-        ]
-    )
+    rc, out = _run_cmd(["req", "-new", "-key", str(key_path), "-out", str(csr_path), "-subj", subj])
+    if rc != 0:
+        raise RuntimeError(f"CSR generation failed for {safe_name}: {out[:300]}")
+    # CA private key is decrypted from the vault only for the duration of the signing command.
+    with materialize_keys(ca_key):
+        rc, out = _run_cmd(
+            [
+                "x509",
+                "-req",
+                "-in",
+                str(csr_path),
+                "-CA",
+                str(ca_crt),
+                "-CAkey",
+                str(ca_key),
+                "-CAcreateserial",
+                "-out",
+                str(crt_path),
+                "-days",
+                "90",
+                "-extfile",
+                str(ext_file),
+            ]
+        )
+    if rc != 0:
+        raise RuntimeError(f"Leaf signing failed for {safe_name}: {out[:300]}")
 
     register_key(f"{safe_name}-key", key_alg, "tls-leaf", key_path, rotate_days=90)
     cert_id = _record_certificate(safe_name, ca_name, f"CN=localhost, OU={safe_name}", key_alg, sig_alg, 90, crt_path)

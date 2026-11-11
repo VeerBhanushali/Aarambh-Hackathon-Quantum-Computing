@@ -71,16 +71,27 @@ bash scripts/run.sh
 
 Then open **http://127.0.0.1:8000** in your browser and click **▶ Run Guided Demo** in the top bar.
 
-### Running Automated Tests
-```powershell
-python -m pytest -v
+### Option D: Use a specific OpenSSL 3.5+ binary (Linux / WSL2 with an older system OpenSSL)
+Ubuntu 24.04 and Debian 12 ship OpenSSL 3.0, which has **no** ML-KEM / ML-DSA / SLH-DSA. Point the app at a 3.5+ binary:
+```bash
+nix build nixpkgs#openssl_3_5.bin --no-link --print-out-paths   # one way to get a prebuilt 3.5 binary
+export OPENSSL_BIN=/nix/store/<hash>-openssl-3.5.x-bin/bin/openssl
+bash scripts/run.sh
 ```
+If OpenSSL is older than 3.5 the dashboard shows a yellow banner listing what is degraded; classical scanning,
+risk scoring and the classical-only Hybrid Lab mode still work.
+
+### Running Automated Tests
+```bash
+OPENSSL_BIN=/path/to/openssl-3.5 python -m pytest -v
+```
+PQC-dependent tests are skipped (with a reason) when OpenSSL < 3.5; `test_status` fails on purpose to flag that environment.
 
 ---
 
 ## 4. OpenSSL 3.5+ CLI Flags & Notes
 
-Verified against `OpenSSL 3.5.6`:
+Verified against `OpenSSL 3.5.9` (Linux x86_64):
 - **Dual-Certificate Serving (`openssl s_server`)**: Uses `-cert <classical.crt> -key <classical.key> -dcert <mldsa65.crt> -dkey <mldsa65.key> -groups X25519MLKEM768:X25519`.
 - **KEM Encapsulation/Decapsulation (`openssl pkeyutl`)**: Uses `-encap -pubin -inkey <pub.der> -keyform DER -out <ct.bin> -secret <ss.bin>` and `-decap -inkey <priv.pem> -in <ct.bin> -secret <ss.bin>`.
 - **CycloneDX CBOM**: `GET /api/cbom/{scan_id}` outputs CycloneDX 1.6 `cryptographic-asset` components with `cryptoProperties` (`assetType`, `algorithmProperties`, `nistQuantumSecurityLevel`).
@@ -93,4 +104,7 @@ Verified against `OpenSSL 3.5.6`:
 2. **Self-Signed Internal CAs**: Public WebPKI CAs do not yet issue ML-DSA leaf certificates to browsers; therefore Quantum Guard recommends dual-certificate serving (`hybrid_mlkem_ecdsa` + `ML-DSA-65` dual-cert) for public endpoints and internal PQC CA (`ML-DSA-65`) leaves for internal services.
 3. **Mosca Shelf-Life Parameters**: `years_to_crqc` (default 10 years) and `migration_years` (default 3 years) are configurable risk assumptions exposed as interactive sliders in the UI.
 4. **Subprocess Benchmark Overhead**: When `liboqs-python` is not compiled in-process, PQC micro-benchmarks and `s_client` handshake benchmarks execute via the native OpenSSL 3.5+ CLI and include OS process creation overhead; use them for relative comparison.
-5. **Key Vault Master Key**: Generated at `data/.master_key` (`chmod 600`) or read from `QG_MASTER_KEY`. Production deployments should wrap the master key in an FIPS 140-3 HSM or Cloud KMS.
+5. **Key Vault Master Key**: Generated at `data/.master_key` (`chmod 600`) or read from `QG_MASTER_KEY` (64 hex chars, or a passphrase that is hashed with SHA-256). Production deployments should wrap the master key in a FIPS 140-3 HSM or Cloud KMS.
+6. **Keys at rest**: private keys exist on disk only as `<name>.key.enc` (AES-256-GCM). They are decrypted to a `chmod 600` file only for the duration of an `openssl` command (CSR signing, or `s_server` start-up, after which the plaintext is overwritten and deleted). The running `s_server` processes hold keys in memory.
+7. **Benchmark methodology**: the primary table comes from `openssl speed`, which reports aggregate throughput; the value shown is the mean (1000 / ops-per-sec), and **p95 / CPU are shown as n/a** because that tool does not expose them. The Python `cryptography` table reports real median, p95 and CPU time (10 warm-up + N iterations). Handshake rows are wall time of a whole `s_client` process (relative comparison only); the meaningful number there is handshake bytes. Every "key takeaway" sentence is generated from the measured numbers of that run.
+8. **Root CA rotation** is not automated (it needs a key ceremony and cross-signing); leaf keys rotate from the Key Vault tab and running services are restarted to load the new leaf.

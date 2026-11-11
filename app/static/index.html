@@ -40,6 +40,7 @@
   <!-- Runtime Capability Banner -->
   <div class="cap-banner" id="cap-banner">
     <span id="cap-text">Checking cryptographic runtime capabilities (OpenSSL 3.5+ / FIPS 203/204/205)...</span>
+    <div id="cap-degraded" style="display:none; margin-top:6px; color:#fbbf24; font-size:0.85rem;"></div>
     <div class="severity-legend">
       <span>Severity Legend:</span>
       <span class="badge sev-critical">Critical (&ge;80)</span>
@@ -125,7 +126,7 @@
         </div>
 
         <div class="card">
-          <h3>Migration Progress by Wave &amp; Severity Breakdown</h3>
+          <h3>Migration Progress by Wave</h3>
           <div class="chart-box">
             <canvas id="chart-overview-waves"></canvas>
           </div>
@@ -423,6 +424,9 @@
               <option value="hybrid">Hybrid Mode (X25519 + ML-KEM-768)</option>
               <option value="classical">Classical-Only Mode (X25519 Alone)</option>
             </select>
+            <label style="font-size:0.82rem; display:flex; gap:4px; align-items:center; white-space:nowrap;">
+              <input type="checkbox" id="hybrid-tamper" style="width:auto;" /> Tamper ciphertext
+            </label>
             <button class="btn" onclick="runHybridLab()">&#128274; Encrypt, Combine &amp; Decrypt</button>
           </div>
           <div id="hybrid-summary-box"></div>
