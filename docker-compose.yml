@@ -1,0 +1,21 @@
+services:
+  quantum-guard:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: quantum-guard-ps07
+    ports:
+      - "8000:8000"
+      - "9441:9441"
+      - "9442:9442"
+      - "9443:9443"
+      - "9444:9444"
+      - "9445:9445"
+    volumes:
+      - quantum_guard_data:/app/data
+    environment:
+      - OPENSSL_BIN=/usr/bin/openssl
+    restart: unless-stopped
+
+volumes:
+  quantum_guard_data:

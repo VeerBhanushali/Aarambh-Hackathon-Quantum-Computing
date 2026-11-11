@@ -52,12 +52,19 @@ FastAPI Application (app/main.py)
 
 ## 3. Setup & Running
 
-### Quick Start (Windows PowerShell)
+### Option A: One-Command Docker Setup (Any OS — Windows / macOS / Linux)
+Includes Python 3.11 and native OpenSSL 3.5+ pre-configured inside the container:
+```bash
+docker compose up --build
+```
+*(Or with plain Docker: `docker build -t quantum-guard . && docker run -p 8000:8000 quantum-guard`)*
+
+### Option B: Quick Start (Windows PowerShell)
 ```powershell
 .\scripts\run.ps1
 ```
 
-### Quick Start (Linux / macOS / WSL2 / Git Bash)
+### Option C: Quick Start (Linux / macOS / WSL2 / Git Bash)
 ```bash
 bash scripts/run.sh
 ```
