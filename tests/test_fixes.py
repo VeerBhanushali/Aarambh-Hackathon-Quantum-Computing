@@ -85,3 +85,12 @@ def test_vault_rejects_root_ca_rotation():
     root = next(k for k in keys if k["purpose"] == "root-ca")
     res = client.post(f"/api/vault/rotate/{root['id']}").json()
     assert res["error"] is True
+
+
+def test_executive_report_renders_with_findings_and_plan():
+    client.post("/api/scan?kind=before")
+    client.post("/api/plan")
+    res = client.get("/api/report")
+    assert res.status_code == 200
+    assert res.text.count("<tr>") > 5
+    assert "PRIVATE KEY" not in res.text.upper()

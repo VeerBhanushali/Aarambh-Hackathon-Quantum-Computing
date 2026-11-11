@@ -1,5 +1,7 @@
 # Quantum Guard — Post-Quantum Cryptography Assessment & Migration Platform (PS07)
 
+> **Team: open [NEXT_STEPS.md](NEXT_STEPS.md) first** — remaining tasks before submission, in order, with acceptance checks.
+
 **Quantum Guard** is an end-to-end Post-Quantum Cryptography (PQC) discovery, risk assessment, migration planning, PKI dual-certificate serving, hybrid encryption combiner, and benchmarking platform built for problem statement **PS07**.
 
 Every cryptographic operation, TLS handshake, certificate chain, and benchmark measurement is executed live using **OpenSSL 3.5+ CLI** (native FIPS 203 ML-KEM, FIPS 204 ML-DSA, FIPS 205 SLH-DSA) and Python `cryptography` (X25519, ECDSA, RSA, HKDF-SHA256, AES-256-GCM)—with zero hand-rolled primitives and zero hard-coded fake data.

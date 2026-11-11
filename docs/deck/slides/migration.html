@@ -1,0 +1,36 @@
+<section id="migration" data-transition="fade" style="background:#0E1726;color:#F3F1EA;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:40px">
+<div style="display:flex;flex-direction:column;gap:12px">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;color:#F2A541;letter-spacing:2px;text-transform:uppercase">Post-quantum migration</p>
+<h2 style="font-size:64px;font-weight:700;line-height:1.1">32 plan items in three waves, key exchange first</h2>
+</div>
+<div style="display:flex;gap:24px">
+<div style="flex:1;display:flex;flex-direction:column;gap:10px;background:#17233A;padding:32px;border-radius:12px;border-top:6px solid #F2A541">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;color:#F2A541">WAVE 1 · 13 ITEMS</p>
+<h3 style="font-size:32px;font-weight:700;line-height:1.25">Urgent key exchange and broken algorithms</h3>
+<p style="font-size:24px;line-height:1.45;color:#A9B8CC">Classical TLS key exchange to X25519MLKEM768 (FIPS 203); TLS 1.2 to 1.3 first. MD5, SHA-1, 3DES, RC4 replaced now.</p>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:10px;background:#17233A;padding:32px;border-radius:12px;border-top:6px solid #4F8EF7">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;color:#4F8EF7">WAVE 2 · 6 ITEMS</p>
+<h3 style="font-size:32px;font-weight:700;line-height:1.25">Certificates and PKI</h3>
+<p style="font-size:24px;line-height:1.45;color:#A9B8CC">Internal services get ML-DSA-65 leaves from our PQC CA (FIPS 204). Public services keep ECDSA and add ML-DSA via dual-cert.</p>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:10px;background:#17233A;padding:32px;border-radius:12px;border-top:6px solid #8DA2BF">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;color:#A9B8CC">WAVE 3 · 13 ITEMS</p>
+<h3 style="font-size:32px;font-weight:700;line-height:1.25">Code signing and long-lived keys</h3>
+<p style="font-size:24px;line-height:1.45;color:#A9B8CC">RSA and ECDSA in code to ML-DSA behind a crypto-agility wrapper. Roots and firmware keys to SLH-DSA (FIPS 205).</p>
+</div>
+</div>
+<div style="display:flex;gap:24px;align-items:center;background:#F3F1EA;padding:32px 40px;border-radius:12px">
+<p style="font-size:32px;font-weight:700;color:#0E1726;width:340px">Apply → rescan</p>
+<div style="flex:1;display:flex;flex-direction:column;gap:4px">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:44px;font-weight:700;color:#0E1726">33.3% → 86.7%</p>
+<p style="font-size:24px;color:#3E4A5C">network TLS readiness</p>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:4px">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:44px;font-weight:700;color:#0E1726">30.4% → 47.8%</p>
+<p style="font-size:24px;color:#3E4A5C">overall readiness</p>
+</div>
+</div>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#A9B8CC">10 network items auto-applied; the other 22 are code and PKI changes a developer must make · 5 / 8</p>
+<aside>(0:45 demo) The planner turns each finding into an action with a target algorithm, a standard, an effort level and a rationale. Waves follow NIST's advice: key establishment first because of harvest-now-decrypt-later. Click Apply: the ten network items are reconfigured live, then the after-scan shows network readiness going from 33.3% to 86.7%. Overall readiness reaches 47.8%, not 100%, on purpose: the remaining items are source-code changes (with file and line) that no tool should rewrite automatically. Say this before a judge asks.</aside>
+</section>

@@ -1,0 +1,18 @@
+<section id="benchmarks" data-transition="fade" style="background:#0E1726;color:#F3F1EA;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:40px">
+<div style="display:flex;flex-direction:column;gap:12px">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;color:#F2A541;letter-spacing:2px;text-transform:uppercase">Performance benchmarking</p>
+<h2 style="font-size:64px;font-weight:700;line-height:1.1">Key exchange got faster; the cost is bytes</h2>
+</div>
+<table style="font-size:28px;color:#F3F1EA">
+<tr style="background:#24334F"><th style="width:28%;color:#F3F1EA">Operation</th><th style="width:22%;color:#F3F1EA">Classical</th><th style="width:22%;color:#F3F1EA">Post-quantum</th><th style="width:28%;color:#F3F1EA">Result</th></tr>
+<tr><td>Decrypt / decapsulate</td><td>RSA-2048 0.299 ms</td><td>ML-KEM-768 0.030 ms</td><td>9.8x faster</td></tr>
+<tr style="background:#17233A"><td>Key exchange / encapsulate</td><td>X25519 0.027 ms</td><td>ML-KEM-768 0.018 ms</td><td>1.6x faster</td></tr>
+<tr><td>Sign</td><td>ECDSA P-256 0.019 ms</td><td>ML-DSA-65 0.712 ms</td><td>38x slower</td></tr>
+<tr style="background:#17233A"><td>Verify</td><td>ECDSA P-256 0.060 ms</td><td>ML-DSA-65 0.149 ms</td><td>2.5x slower</td></tr>
+<tr><td>Signature size</td><td>ECDSA ~72 B</td><td>ML-DSA-65 3,309 B</td><td>46x larger</td></tr>
+<tr style="background:#17233A"><td>TLS 1.3 handshake bytes</td><td>1,255 B</td><td>3,519 B hybrid · 13,168 B full PQC</td><td>+2,264 B for hybrid</td></tr>
+</table>
+<p style="font-size:24px;line-height:1.45;color:#A9B8CC">SLH-DSA signs in 244 ms (128s) or 11.8 ms (128f), so we reserve it for rarely used root and firmware keys.</p>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#A9B8CC">Means from openssl speed, OpenSSL 3.5.9 · Intel Xeon 2.30 GHz, 4 cores, Linux · handshake bytes from s_client · 7 / 8</p>
+<aside>(0:30) [Before presenting: re-run benchmarks on the presentation laptop and replace these numbers and the machine line in the footer; the dashboard's Key takeaways box gives the sentences.] The honest story: ML-KEM is faster than RSA and even X25519 on this machine, so post-quantum key exchange costs almost nothing in CPU. Signatures are where the cost sits: ML-DSA signing is tens of times slower than ECDSA and signatures are about 46 times larger. In a real handshake hybrid key exchange adds about 2.3 KB, while a full ML-DSA certificate chain pushes the handshake past 13 KB. Handshake wall time is dominated by process start-up, so we compare bytes, not milliseconds.</aside>
+</section>

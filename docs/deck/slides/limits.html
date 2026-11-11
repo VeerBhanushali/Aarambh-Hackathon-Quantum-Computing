@@ -1,0 +1,32 @@
+<section id="limits" data-transition="fade" style="background:#F3F1EA;color:#0E1726;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:40px">
+<div style="display:flex;flex-direction:column;gap:12px">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;color:#B45F06;letter-spacing:2px;text-transform:uppercase">Limitations and next steps</p>
+<h2 style="font-size:64px;font-weight:700;line-height:1.1">What we simulated, what we assumed, what comes next</h2>
+</div>
+<div style="display:flex;gap:40px">
+<div style="flex:1;display:flex;flex-direction:column;gap:16px;background:#FBFAF6;border:1px solid #D9D4C7;padding:36px;border-radius:12px">
+<h3 style="font-size:32px;font-weight:700">Limitations</h3>
+<ul style="font-size:24px;line-height:1.5;color:#3E4A5C">
+<li>Enterprise is 5 local TLS services and a synthetic codebase</li>
+<li>CAs are self-signed internal roots</li>
+<li>Years to a quantum computer is an assumption (slider)</li>
+<li>Handshake timing includes process start-up</li>
+<li>openssl speed gives means; no p95 for those rows</li>
+<li>Root CA rotation needs a manual key ceremony</li>
+</ul>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:16px;background:#FBFAF6;border:1px solid #D9D4C7;padding:36px;border-radius:12px">
+<h3 style="font-size:32px;font-weight:700">Next steps</h3>
+<ul style="font-size:24px;line-height:1.5;color:#3E4A5C">
+<li>Scan real hosts and repositories</li>
+<li>CBOM diff in CI to block new RSA/ECC</li>
+<li>Vault master key in an HSM or cloud KMS</li>
+<li>Public ML-DSA certificates once CAs issue them</li>
+<li>Add FN-DSA (FIPS 206) and HQC when final</li>
+</ul>
+</div>
+</div>
+<p style="font-size:44px;font-weight:700;line-height:1.25;background:#0E1726;color:#F3F1EA;padding:36px 40px;border-radius:12px">Vetted libraries only. No hand-rolled crypto. <span style="color:#F2A541">Every number measured live.</span></p>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#3E4A5C">Quantum Guard · PS07 · quantum-resistant, not quantum-proof · 8 / 8</p>
+<aside>(0:30 close) Be upfront about limits: the enterprise is simulated, our CAs are internal, and the years-to-quantum value is an assumption the user can change, which is exactly why it is a slider. The platform itself runs on any machine with OpenSSL 3.5, so pointing it at real services is configuration, not new code. Close: vetted libraries only, no hand-rolled cryptography, every number on screen came from a real run. Thank you; happy to run any part of the demo again.</aside>
+</section>

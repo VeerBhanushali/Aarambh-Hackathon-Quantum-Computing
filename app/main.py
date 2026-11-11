@@ -1,6 +1,7 @@
 """FastAPI Application for Quantum Guard (PS07 Post-Quantum Cryptography Assessment & Migration Platform)."""
 from __future__ import annotations
 
+from html import escape as html_escape
 import json
 import os
 from contextlib import asynccontextmanager
@@ -445,19 +446,19 @@ def api_executive_report() -> HTMLResponse:
 
     top_findings = findings_data.get("findings", [])[:12]
     rows_html = "".join(
-        f"<tr><td>{f['location']}</td><td>{f['source']}</td><td><b>{f['algorithm']}</b></td>"
+        f"<tr><td>{html_escape(str(f['location']))}</td><td>{html_escape(str(f['source']))}</td><td><b>{html_escape(str(f['algorithm']))}</b></td>"
         f"<td><span class='sev-{f['severity']}'>{f['severity'].upper()} ({f['score']})</span></td>"
-        f"<td>{'YES' if f['hndl_urgent'] else 'No'}</td><td>{f['ir8547_status']}</td></tr>"
+        f"<td>{'YES' if f['hndl_urgent'] else 'No'}</td><td>{html_escape(str(f['ir8547_status']))}</td></tr>"
         for f in top_findings
     )
 
     plan_html = "".join(
-        f"<tr><td>Wave {p['wave']}</td><td>{p['location']}</td><td>{p['current_algorithm']}</td>"
-        f"<td><b>{p['recommended_target']}</b> ({p['standard']})</td><td>{p['effort']}</td><td>{p['status'].upper()}</td></tr>"
+        f"<tr><td>Wave {p['wave']}</td><td>{html_escape(str(p['location']))}</td><td>{html_escape(str(p['current_algorithm']))}</td>"
+        f"<td><b>{html_escape(str(p['recommended_target']))}</b> ({html_escape(str(p['standard']))})</td><td>{html_escape(str(p['effort']))}</td><td>{p['status'].upper()}</td></tr>"
         for p in plan.get("items", [])[:15]
     )
 
-    takeaways_html = "".join(f"<li>{t}</li>" for t in bench.get("takeaways", []))
+    takeaways_html = "".join(f"<li>{html_escape(t)}</li>" for t in bench.get("takeaways", []))
     mi = bench.get("machine_info", {})
 
     before_r = comp.get("before_readiness", readiness.get("readiness_score", 0.0))

@@ -860,6 +860,8 @@ async function refreshAll() {
 }
 
 window.addEventListener("DOMContentLoaded", async () => {
+  const tlDate = document.getElementById("tl-today-date");
+  if (tlDate) tlDate.textContent = new Date().toLocaleDateString(undefined, { year: "numeric", month: "long" });
   await refreshAll();
   await runHybridLab();
 });

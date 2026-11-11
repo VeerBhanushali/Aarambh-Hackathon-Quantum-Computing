@@ -1,0 +1,41 @@
+<section id="hybrid-pki" data-transition="fade" style="background:#F3F1EA;color:#0E1726;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:40px">
+<div style="display:flex;flex-direction:column;gap:12px">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;color:#B45F06;letter-spacing:2px;text-transform:uppercase">Hybrid encryption · certificate migration</p>
+<h2 style="font-size:64px;font-weight:700;line-height:1.1">Hybrid stays secure if either algorithm holds</h2>
+</div>
+<div style="display:flex;gap:40px">
+<div style="flex:1;display:flex;flex-direction:column;gap:20px">
+<h3 style="font-size:32px;font-weight:700">Hybrid lab: X25519 + ML-KEM-768</h3>
+<div style="display:flex;flex-direction:column;gap:12px;background:#0E1726;padding:28px;border-radius:12px">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;line-height:1.5;color:#F3F1EA">X25519 share 32 B + ML-KEM ct 1,088 B<br>→ HKDF-SHA256 (bound to both)<br>→ AES-256-GCM</p>
+</div>
+<p style="font-size:24px;line-height:1.45;color:#3E4A5C">Tampered ciphertext is rejected by the GCM tag. Policy tests, live over TLS 1.3, 3 of 3 pass:</p>
+<ul style="font-size:24px;line-height:1.5;color:#0E1726">
+<li>Classical client still connects to a hybrid server (X25519)</li>
+<li>Strict PQC server rejects a classical client</li>
+<li>Modern client negotiates X25519MLKEM768</li>
+</ul>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:20px">
+<h3 style="font-size:32px;font-weight:700">Dual certificates, one server</h3>
+<table style="font-size:24px;color:#0E1726">
+<tr style="background:#0E1726"><th style="width:30%;color:#F3F1EA">Client</th><th style="width:36%;color:#F3F1EA">Certificate</th><th style="width:34%;color:#F3F1EA">Key exchange</th></tr>
+<tr><td>Old</td><td>ECDSA P-256</td><td>X25519</td></tr>
+<tr style="background:#E9E5D9"><td>New</td><td>ML-DSA-65</td><td>X25519MLKEM768</td></tr>
+</table>
+<p style="font-size:24px;line-height:1.45;color:#3E4A5C">Public CAs do not issue ML-DSA certificates yet, so public services keep ECDSA and add ML-DSA. Roots: ECDSA P-384, ML-DSA-87, SLH-DSA.</p>
+<div style="display:flex;gap:24px">
+<div style="flex:1;background:#FBFAF6;border:1px solid #D9D4C7;padding:24px;border-radius:12px;display:flex;flex-direction:column;gap:4px">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:44px;font-weight:700">578 B</p>
+<p style="font-size:24px;color:#3E4A5C">ECDSA leaf (DER)</p>
+</div>
+<div style="flex:1;background:#FBFAF6;border:1px solid #D9D4C7;padding:24px;border-radius:12px;display:flex;flex-direction:column;gap:4px">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:44px;font-weight:700;color:#B45F06">6,988 B</p>
+<p style="font-size:24px;color:#3E4A5C">ML-DSA-65 leaf (DER)</p>
+</div>
+</div>
+</div>
+</div>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#3E4A5C">All results from live openssl s_server / s_client runs · 6 / 8</p>
+<aside>(0:45 Hybrid lab + 0:30 PKI) Encrypt a message: the sender does an X25519 exchange and an ML-KEM-768 encapsulation, and both secrets go through HKDF-SHA256 with the public values bound into the context, then AES-256-GCM. An attacker who records this must break X25519 and ML-KEM to read it. Tick Tamper to show the GCM tag rejecting a changed ciphertext. Then run the three policy tests. For PKI, run the dual-certificate demo: the same server hands an old client an ECDSA certificate and a new client an ML-DSA-65 certificate. NIST has said the 2035 disallowance was not meant to apply to hybrids that pair an approved PQC algorithm with a classical one, which is why hybrid is our default.</aside>
+</section>

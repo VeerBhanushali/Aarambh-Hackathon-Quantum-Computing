@@ -1,0 +1,29 @@
+<section id="discovery" data-transition="fade" style="background:#0E1726;color:#F3F1EA;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:32px">
+<div style="display:flex;flex-direction:column;gap:12px">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;color:#F2A541;letter-spacing:2px;text-transform:uppercase">Cryptographic discovery</p>
+<h2 style="font-size:64px;font-weight:700;line-height:1.1">Three scanners, one inventory, one CBOM</h2>
+</div>
+<div style="display:flex;gap:64px;align-items:stretch">
+<div style="width:420px;display:flex;flex-direction:column;justify-content:center;gap:8px">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:200px;font-weight:700;line-height:1;color:#F2A541">46</p>
+<p style="font-size:32px;line-height:1.35;color:#A9B8CC">cryptographic assets found in one scan</p>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:24px">
+<div style="display:flex;gap:24px;align-items:baseline;border-bottom:1px solid #2C3A55;padding:0 0 20px">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:44px;font-weight:700;color:#4F8EF7;width:100px">15</p>
+<p style="flex:1;font-size:32px;line-height:1.35"><b>Network</b> — each service probed 3 ways with s_client (TLS 1.3, hybrid group, TLS 1.2): key exchange, certificate, cipher</p>
+</div>
+<div style="display:flex;gap:24px;align-items:baseline;border-bottom:1px solid #2C3A55;padding:0 0 20px">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:44px;font-weight:700;color:#4F8EF7;width:100px">17</p>
+<p style="flex:1;font-size:32px;line-height:1.35"><b>Source code</b> — 17 rules: RSA, ECDSA, DH, MD5, SHA-1, 3DES, RC4, JWT RS256 … with file and line</p>
+</div>
+<div style="display:flex;gap:24px;align-items:baseline">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:44px;font-weight:700;color:#4F8EF7;width:100px">14</p>
+<p style="flex:1;font-size:32px;line-height:1.35"><b>Certificates and keys</b> — key and signature algorithm, size, expiry, encrypted-at-rest status</p>
+</div>
+</div>
+</div>
+<p style="font-size:32px;line-height:1.35;background:#17233A;padding:28px 36px;border-radius:12px;color:#F3F1EA">Export: <b>CycloneDX 1.6 CBOM</b> — every asset as a cryptographic-asset component with primitive, parameter set and NIST quantum security level.</p>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#A9B8CC">Counts from a live scan of the simulated enterprise · 3 / 8</p>
+<aside>(0:45 demo) Start the enterprise, click Run discovery. The network scanner talks to each of the five services three times with openssl s_client and records the negotiated group, the peer signature type and the certificate. The code scanner searches a synthetic company codebase with 17 rules and reports file and line. The certificate scanner reads every certificate and key, taking the key algorithm from the vault's records. Then download the CBOM: a CycloneDX 1.6 JSON file, which is the format organisations already use for software bills of materials.</aside>
+</section>
