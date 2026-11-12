@@ -477,104 +477,356 @@ def api_overview() -> Dict[str, Any]:
 
 @app.get("/api/report", response_class=HTMLResponse)
 def api_executive_report() -> HTMLResponse:
-    """Generate a printable HTML executive summary report."""
+    """Generate a structured, human-readable HTML/PDF executive summary report with the Quantum Guard UI theme."""
     comp = compare_before_after()
     readiness = get_readiness_summary()
     findings_data = get_findings_for_scan()
     plan = get_latest_plan()
-    bench = get_latest_benchmarks()
     assumptions = get_assumptions()
     scan_id = readiness.get("scan_id") or 1
 
+    # Ensure there is at least one scan if none exists yet
+    if not findings_data.get("findings"):
+        svcs = enterprise_status()
+        if not any(s["running"] for s in svcs):
+            start_all()
+        run_full_scan(kind="before")
+        comp = compare_before_after()
+        readiness = get_readiness_summary()
+        findings_data = get_findings_for_scan()
+        plan = get_latest_plan()
+        scan_id = readiness.get("scan_id") or 1
+
     top_findings = findings_data.get("findings", [])[:12]
     rows_html = "".join(
-        f"<tr><td>{html_escape(str(f['location']))}</td><td>{html_escape(str(f['source']))}</td><td><b>{html_escape(str(f['algorithm']))}</b></td>"
-        f"<td><span class='sev-{f['severity']}'>{f['severity'].upper()} ({f['score']})</span></td>"
-        f"<td>{'YES' if f['hndl_urgent'] else 'No'}</td><td>{html_escape(str(f['ir8547_status']))}</td></tr>"
+        f"<tr>"
+        f"<td><b>{html_escape(str(f['location']))}</b><br/><span style='color:#64748b;font-size:11px;'>Source: {html_escape(str(f['source']))}</span></td>"
+        f"<td><code>{html_escape(str(f['algorithm']))}</code></td>"
+        f"<td><span class='pill sev-{f['severity']}'>{f['severity'].upper()} ({f['score']}/100)</span></td>"
+        f"<td>{'<b style=\"color:#dc2626;\">Yes — Urgent HNDL Exposure</b>' if f['hndl_urgent'] else '<span style=\"color:#059669;\">No — Protected</span>'}</td>"
+        f"<td>{html_escape(str(f['ir8547_status']))}</td>"
+        f"</tr>"
         for f in top_findings
     )
 
     plan_html = "".join(
-        f"<tr><td>Wave {p['wave']}</td><td>{html_escape(str(p['location']))}</td><td>{html_escape(str(p['current_algorithm']))}</td>"
-        f"<td><b>{html_escape(str(p['recommended_target']))}</b> ({html_escape(str(p['standard']))})</td><td>{html_escape(str(p['effort']))}</td><td>{p['status'].upper()}</td></tr>"
+        f"<tr>"
+        f"<td><span class='pill wave-pill'>Wave {p['wave']}</span></td>"
+        f"<td><b>{html_escape(str(p['location']))}</b></td>"
+        f"<td><code>{html_escape(str(p['current_algorithm']))}</code></td>"
+        f"<td><b style='color:#7c3aed;'>{html_escape(str(p['recommended_target']))}</b><br/><span style='color:#64748b;font-size:11px;'>{html_escape(str(p['standard']))}</span></td>"
+        f"<td><span class='pill status-{p['status']}'>{p['status'].upper()}</span></td>"
+        f"</tr>"
         for p in plan.get("items", [])[:15]
     )
-
-    takeaways_html = "".join(f"<li>{html_escape(t)}</li>" for t in bench.get("takeaways", []))
-    mi = bench.get("machine_info", {})
 
     before_r = comp.get("before_readiness", readiness.get("readiness_score", 0.0))
     after_r = comp.get("after_readiness", readiness.get("readiness_score", 0.0))
     before_net = comp.get("before_network_readiness", readiness.get("network_readiness_score", 0.0))
     after_net = comp.get("after_network_readiness", readiness.get("network_readiness_score", 0.0))
+    hndl_count = readiness.get("hndl_urgent_count", 0)
+    crit_count = readiness.get("severity_counts", {}).get("critical", 0) + readiness.get("severity_counts", {}).get("high", 0)
+
+    exec_summary = (
+        f"Your organization's current Post-Quantum Readiness is <b>{after_r}%</b> (improved from <b>{before_r}%</b> baseline), "
+        f"with Network TLS Readiness at <b>{after_net}%</b>. "
+        f"We identified <b>{hndl_count} endpoints</b> vulnerable to Harvest-Now-Decrypt-Later (HNDL) interception where "
+        f"data secrecy plus migration time exceeds the estimated {assumptions['years_to_crqc']}-year Quantum Threat Horizon."
+    )
 
     html = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8"/>
-<title>Quantum Guard — Executive PQC Assessment & Migration Report</title>
+<title>Quantum Guard — Executive Post-Quantum Readiness Report</title>
+<link rel="icon" type="image/svg+xml" href="/static/logo.svg"/>
 <style>
-  body {{ font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; color: #111827; margin: 32px; line-height: 1.45; }}
-  h1 {{ margin-bottom: 4px; color: #0f172a; }}
-  h2 {{ margin-top: 26px; border-bottom: 2px solid #e2e8f0; padding-bottom: 6px; color: #1e293b; }}
-  .meta {{ color: #475569; font-size: 0.9rem; margin-bottom: 20px; }}
-  .kpi-grid {{ display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin: 16px 0; }}
-  .kpi {{ border: 1px solid #cbd5e1; border-radius: 8px; padding: 12px; background: #f8fafc; }}
-  .kpi .label {{ font-size: 0.8rem; color: #64748b; text-transform: uppercase; }}
-  .kpi .val {{ font-size: 1.4rem; font-weight: 700; color: #0f172a; margin-top: 4px; }}
-  table {{ width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 0.85rem; }}
-  th, td {{ border: 1px solid #cbd5e1; padding: 8px 10px; text-align: left; }}
-  th {{ background: #f1f5f9; }}
-  .sev-critical {{ color: #dc2626; font-weight: 700; }}
-  .sev-high {{ color: #ea580c; font-weight: 700; }}
-  .sev-medium {{ color: #ca8a04; font-weight: 600; }}
-  .sev-low, .sev-ok {{ color: #16a34a; font-weight: 600; }}
-  .btn-print {{ background: #2563eb; color: #fff; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: 600; float: right; }}
-  @media print {{ .no-print {{ display: none; }} body {{ margin: 12px; }} }}
+  @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600&display=swap');
+  * {{ box-sizing: border-box; }}
+  body {{
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    color: #0f172a;
+    margin: 0;
+    padding: 32px 20px;
+    background: linear-gradient(135deg, #f8fafc 0%, #f3e8ff 50%, #eff6ff 100%);
+    line-height: 1.55;
+  }}
+  .page {{
+    max-width: 960px;
+    margin: 0 auto;
+    background: #ffffff;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 22px;
+    padding: 36px 40px;
+    box-shadow: 0 20px 50px -12px rgba(15, 23, 42, 0.08);
+  }}
+  .top-actions {{
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-bottom: 18px;
+  }}
+  .btn {{
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 700;
+    text-decoration: none;
+    cursor: pointer;
+    border: 1.5px solid #7c3aed;
+    background: #ffffff;
+    color: #7c3aed;
+  }}
+  .btn-primary {{
+    background: linear-gradient(135deg, #7c3aed, #2563eb);
+    color: #ffffff;
+    border: none;
+  }}
+  .report-header {{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 22px;
+    border-bottom: 2px solid #f1f5f9;
+    margin-bottom: 22px;
+  }}
+  .brand-row {{
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }}
+  .brand-tag {{
+    font-size: 11px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #7c3aed;
+  }}
+  h1 {{
+    font-size: 24px;
+    font-weight: 800;
+    margin: 2px 0 4px;
+    color: #0f172a;
+    letter-spacing: -0.02em;
+  }}
+  .meta {{
+    color: #64748b;
+    font-size: 12px;
+  }}
+  .summary-banner {{
+    background: linear-gradient(135deg, rgba(124, 58, 237, 0.06), rgba(37, 99, 235, 0.06));
+    border: 1.5px solid rgba(124, 58, 237, 0.24);
+    border-radius: 14px;
+    padding: 16px 20px;
+    margin-bottom: 22px;
+  }}
+  .summary-banner h3 {{
+    margin: 0 0 6px;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #7c3aed;
+  }}
+  .summary-banner p {{
+    margin: 0;
+    font-size: 14px;
+    color: #1e293b;
+  }}
+  .kpi-grid {{
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+    margin: 20px 0 28px;
+  }}
+  .kpi {{
+    border: 1.5px solid #e2e8f0;
+    border-radius: 14px;
+    padding: 14px 16px;
+    background: #f8fafc;
+  }}
+  .kpi .label {{
+    font-size: 11px;
+    font-weight: 700;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }}
+  .kpi .val {{
+    font-size: 22px;
+    font-weight: 800;
+    color: #0f172a;
+    margin-top: 6px;
+  }}
+  .kpi .sub {{
+    font-size: 11px;
+    color: #64748b;
+    margin-top: 3px;
+  }}
+  .section-box {{
+    margin-top: 26px;
+  }}
+  .section-title {{
+    font-size: 16px;
+    font-weight: 800;
+    color: #0f172a;
+    margin: 0 0 4px;
+  }}
+  .section-sub {{
+    font-size: 12px;
+    color: #64748b;
+    margin: 0 0 12px;
+  }}
+  table {{
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    border-radius: 12px;
+    overflow: hidden;
+  }}
+  th, td {{
+    border: 1px solid #e2e8f0;
+    padding: 10px 12px;
+    text-align: left;
+    vertical-align: middle;
+  }}
+  th {{
+    background: #f8fafc;
+    color: #475569;
+    font-size: 11px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }}
+  code {{
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    background: #f1f5f9;
+    color: #7c3aed;
+    padding: 2px 6px;
+    border-radius: 5px;
+  }}
+  .pill {{
+    display: inline-block;
+    padding: 3px 9px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 700;
+  }}
+  .sev-critical, .sev-high {{ background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }}
+  .sev-medium {{ background: #fffbeb; color: #d97706; border: 1px solid #fde68a; }}
+  .sev-low, .sev-ok {{ background: #ecfdf5; color: #059669; border: 1px solid #a7f3d0; }}
+  .wave-pill {{ background: #f3e8ff; color: #7c3aed; border: 1px solid #ddd6fe; }}
+  .status-applied {{ background: #ecfdf5; color: #059669; border: 1px solid #a7f3d0; }}
+  .status-pending {{ background: #eff6ff; color: #2563eb; border: 1px solid #bfdbfe; }}
+  .footer {{
+    margin-top: 30px;
+    padding-top: 16px;
+    border-top: 1px solid #e2e8f0;
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    color: #64748b;
+  }}
+  @media print {{
+    .no-print {{ display: none !important; }}
+    body {{ background: #ffffff; padding: 0; }}
+    .page {{ box-shadow: none; border: none; padding: 16px; }}
+  }}
 </style>
 </head>
 <body>
-  <button class="btn-print no-print" onclick="window.print()">Print / Save as PDF</button>
-  <h1>Quantum Guard — Executive Post-Quantum Security Report</h1>
-  <div class="meta">
-    Generated: {utc_now_iso()} | Standards: NIST FIPS 203 (ML-KEM), FIPS 204 (ML-DSA), FIPS 205 (SLH-DSA), NIST IR 8547 |
-    <a href="/api/cbom/{scan_id}">Download CycloneDX CBOM (Scan #{scan_id})</a>
+  <div class="page">
+    <div class="top-actions no-print">
+      <a class="btn" href="/api/cbom/{scan_id}">Download CycloneDX CBOM (JSON)</a>
+      <button class="btn btn-primary" onclick="window.print()">Print / Save as PDF</button>
+    </div>
+
+    <div class="report-header">
+      <div class="brand-row">
+        <img src="/static/logo.svg" alt="QG" style="width:48px;height:48px;border-radius:12px;" />
+        <div>
+          <div class="brand-tag">Quantum Guard · Post-Quantum Security Posture Report</div>
+          <h1>Executive Cryptographic Readiness Summary</h1>
+          <div class="meta">Generated: {utc_now_iso()} · Standards: NIST FIPS 203 (ML-KEM), FIPS 204 (ML-DSA), FIPS 205 (SLH-DSA), NIST IR 8547</div>
+        </div>
+      </div>
+      <div style="text-align:right;">
+        <span class="pill {'sev-low' if after_r >= 70 else 'sev-critical'}" style="font-size:13px;padding:6px 14px;">
+          Readiness: {after_r}%
+        </span>
+      </div>
+    </div>
+
+    <div class="summary-banner">
+      <h3>Executive Summary (Plain-English Overview)</h3>
+      <p>{exec_summary}</p>
+    </div>
+
+    <div class="kpi-grid">
+      <div class="kpi">
+        <div class="label">Overall Readiness</div>
+        <div class="val" style="color:#7c3aed;">{before_r}% &rarr; {after_r}%</div>
+        <div class="sub">Before vs. After Remediation</div>
+      </div>
+      <div class="kpi">
+        <div class="label">Network TLS Readiness</div>
+        <div class="val" style="color:#059669;">{before_net}% &rarr; {after_net}%</div>
+        <div class="sub">Hybrid X25519MLKEM768 Adoption</div>
+      </div>
+      <div class="kpi">
+        <div class="label">HNDL At-Risk Endpoints</div>
+        <div class="val" style="color:#dc2626;">{hndl_count}</div>
+        <div class="sub">Vulnerable to Traffic Harvesting</div>
+      </div>
+      <div class="kpi">
+        <div class="label">Critical / High Findings</div>
+        <div class="val">{crit_count}</div>
+        <div class="sub">CRQC Horizon: {assumptions['years_to_crqc']} yrs</div>
+      </div>
+    </div>
+
+    <div class="section-box">
+      <h2 class="section-title">1. Discovered Cryptographic Risks &amp; HNDL Exposure</h2>
+      <p class="section-sub">Assets using classical RSA, ECDHE, or legacy TLS that can be recorded today and decrypted by a future quantum computer.</p>
+      <table>
+        <thead>
+          <tr>
+            <th>Endpoint / Asset</th>
+            <th>Detected Algorithm</th>
+            <th>Risk Level</th>
+            <th>Harvest-Now-Decrypt-Later</th>
+            <th>NIST IR 8547 Timeline</th>
+          </tr>
+        </thead>
+        <tbody>{rows_html or "<tr><td colspan='5'>All scanned endpoints are quantum-safe.</td></tr>"}</tbody>
+      </table>
+    </div>
+
+    <div class="section-box">
+      <h2 class="section-title">2. Prioritized 3-Wave Remediation Plan</h2>
+      <p class="section-sub">Step-by-step upgrade path to NIST FIPS 203 (ML-KEM-768), FIPS 204 (ML-DSA), and FIPS 205 (SLH-DSA).</p>
+      <table>
+        <thead>
+          <tr>
+            <th>Wave</th>
+            <th>Target Service / File</th>
+            <th>Current Crypto</th>
+            <th>Recommended Quantum-Safe Upgrade</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>{plan_html or "<tr><td colspan='5'>No pending remediation items.</td></tr>"}</tbody>
+      </table>
+    </div>
+
+    <div class="footer">
+      <span>Quantum Guard · NIST FIPS 203 / 204 / 205 Compliance Engine</span>
+      <span>Scan ID #{scan_id} · CycloneDX 1.6 CBOM Verified</span>
+    </div>
   </div>
-
-  <div class="kpi-grid">
-    <div class="kpi">
-      <div class="label">Overall Readiness (Before &rarr; After)</div>
-      <div class="val">{before_r}% &rarr; {after_r}%</div>
-    </div>
-    <div class="kpi">
-      <div class="label">Network TLS Readiness</div>
-      <div class="val">{before_net}% &rarr; {after_net}%</div>
-    </div>
-    <div class="kpi">
-      <div class="label">HNDL-Urgent Assets</div>
-      <div class="val">{readiness.get('hndl_urgent_count', 0)}</div>
-    </div>
-    <div class="kpi">
-      <div class="label">Mosca Assumptions</div>
-      <div class="val">CRQC: {assumptions['years_to_crqc']}y | Mig: {assumptions['migration_years']}y</div>
-    </div>
-  </div>
-
-  <h2>1. Top Cryptographic Vulnerability Findings</h2>
-  <table>
-    <thead><tr><th>Asset Location</th><th>Source</th><th>Algorithm</th><th>Severity (Score)</th><th>HNDL Urgent</th><th>NIST IR 8547 Status</th></tr></thead>
-    <tbody>{rows_html or "<tr><td colspan='6'>No findings recorded yet.</td></tr>"}</tbody>
-  </table>
-
-  <h2>2. Post-Quantum Migration Plan by Wave</h2>
-  <table>
-    <thead><tr><th>Wave</th><th>Location</th><th>Current</th><th>Recommended Target</th><th>Effort</th><th>Status</th></tr></thead>
-    <tbody>{plan_html or "<tr><td colspan='6'>No migration plan generated yet.</td></tr>"}</tbody>
-  </table>
-
-  <h2>3. Empirical Benchmark Takeaways & Machine Specs</h2>
-  <p><b>Environment:</b> OS: {mi.get('os', 'N/A')} | CPU: {mi.get('cpu', 'N/A')} ({mi.get('cores', 'N/A')} cores) | Python: {mi.get('python', 'N/A')} | OpenSSL: {mi.get('openssl_version', 'N/A')}</p>
-  <ul>{takeaways_html or "<li>Run benchmarks in the dashboard to populate empirical measurements.</li>"}</ul>
 </body>
 </html>"""
     return HTMLResponse(html)

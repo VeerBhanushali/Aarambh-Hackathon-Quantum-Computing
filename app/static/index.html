@@ -4,7 +4,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Quantum Guard — Post-Quantum Cryptography Assessment &amp; Migration Platform</title>
-  <link rel="stylesheet" href="/static/style.css?v=12" />
+  <link rel="icon" type="image/svg+xml" href="/static/logo.svg" />
+  <link rel="shortcut icon" href="/static/logo.svg" />
+  <link rel="stylesheet" href="/static/style.css?v=14" />
   <style>
     .tab-section { display: none !important; }
     .tab-section.active { display: block !important; }
@@ -13,13 +15,21 @@
     .saas-stage { display: none !important; }
     .saas-stage.active-stage { display: block !important; }
     .app-layout.saas-stage.active-stage { display: flex !important; }
-    .mkt-shell { height: 100vh; overflow-y: auto; scroll-behavior: smooth; padding: 24px 32px 60px; max-width: 1280px; margin: 0 auto; }
-    .mkt-nav { display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.88); backdrop-filter: blur(16px); border: 1.5px solid #e2e8f0; border-radius: 16px; padding: 12px 22px; position: sticky; top: 0; z-index: 100; box-shadow: 0 8px 24px rgba(15,23,42,0.05); }
-    .mkt-hero { text-align: center; padding: 44px 24px 36px; background: rgba(255,255,255,0.86); border: 1.5px solid #e2e8f0; border-radius: 24px; margin-top: 22px; box-shadow: 0 18px 44px rgba(15,23,42,0.06); position: relative; overflow: hidden; }
-    .mkt-grid-4 { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; margin-top: 22px; }
-    .mkt-card { background: #ffffff; border: 1.5px solid #e2e8f0; border-radius: 18px; padding: 20px; transition: all 0.2s ease; box-shadow: 0 6px 18px rgba(15,23,42,0.04); }
-    .mkt-card:hover { transform: translateY(-3px); border-color: var(--purple); box-shadow: 0 14px 30px rgba(124,58,237,0.1); }
-    .locked-gate-box { background: linear-gradient(180deg, rgba(255,255,255,0.92), #f8fafc); border: 2px dashed var(--purple); border-radius: 18px; padding: 24px; margin-top: 18px; text-align: center; }
+
+    .qg-logo-img { width: 38px; height: 38px; border-radius: 11px; flex-shrink: 0; box-shadow: 0 4px 14px rgba(124, 58, 237, 0.25); }
+    .mkt-shell { height: 100vh; overflow-y: auto; scroll-behavior: smooth; padding: 24px 32px 60px; max-width: 1240px; margin: 0 auto; }
+    .mkt-nav { display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.92); backdrop-filter: blur(16px); border: 1.5px solid #e2e8f0; border-radius: 16px; padding: 12px 22px; position: sticky; top: 0; z-index: 100; box-shadow: 0 8px 24px rgba(15,23,42,0.04); }
+    .mkt-hero { text-align: center; padding: 48px 28px 40px; background: rgba(255,255,255,0.9); border: 1.5px solid #e2e8f0; border-radius: 24px; margin-top: 22px; box-shadow: 0 18px 44px rgba(15,23,42,0.05); }
+    .mkt-grid-4 { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 16px; margin-top: 20px; }
+    .mkt-card { background: #ffffff; border: 1.5px solid #e2e8f0; border-radius: 18px; padding: 22px; transition: all 0.2s ease; box-shadow: 0 6px 18px rgba(15,23,42,0.03); }
+    .mkt-card:hover { transform: translateY(-2px); border-color: var(--purple); box-shadow: 0 12px 28px rgba(124,58,237,0.08); }
+    .locked-gate-box { background: linear-gradient(180deg, rgba(255,255,255,0.96), #f8fafc); border: 1.5px dashed var(--purple); border-radius: 18px; padding: 24px; margin-top: 18px; text-align: center; }
+
+    /* Clean Dashboard 4-KPI Row */
+    .kpi-grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 18px; }
+    @media (max-width: 1100px) { .kpi-grid-4 { grid-template-columns: repeat(2, 1fr); } }
+    .runtime-header-pill { display: inline-flex; align-items: center; gap: 6px; padding: 5px 11px; border-radius: 999px; background: #f8fafc; border: 1px solid #cbd5e1; font-size: 0.72rem; font-weight: 700; color: #334155; white-space: nowrap; }
+    .runtime-dot { width: 7px; height: 7px; border-radius: 50%; background: #10b981; display: inline-block; }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
 </head>
@@ -30,191 +40,183 @@
     <div class="mkt-shell">
       <header class="mkt-nav">
         <div class="brand" style="margin:0;">
-          <div class="brand-orb">QG</div>
+          <img src="/static/logo.svg" alt="QG" class="qg-logo-img" />
           <div>
             <h1 style="margin:0; font-size:1.1rem;">Quantum Guard</h1>
-            <div class="brand-sub">quantumguard-lab.veerbhanushali.in · NIST FIPS 203 · 204 · 205</div>
+            <div class="brand-sub">quantumguard-lab.veerbhanushali.in &middot; NIST FIPS 203 &middot; 204 &middot; 205</div>
           </div>
         </div>
-        <div style="display:flex; gap:18px; align-items:center; font-size:0.84rem; font-weight:700; color:var(--text-secondary);">
-          <a href="#mkt-features" style="color:inherit; text-decoration:none;">Architecture</a>
-          <a href="#mkt-roles" style="color:inherit; text-decoration:none;">Enterprise Roles</a>
+        <div style="display:flex; gap:20px; align-items:center; font-size:0.84rem; font-weight:700; color:var(--text-secondary);">
+          <a href="#mkt-features" style="color:inherit; text-decoration:none;">Platform</a>
+          <a href="#mkt-roles" style="color:inherit; text-decoration:none;">Roles</a>
           <a href="#mkt-timeline" style="color:inherit; text-decoration:none;">NIST 2030 Mandate</a>
         </div>
         <div style="display:flex; gap:10px; align-items:center;">
-          <button class="btn btn-outline btn-sm" onclick="switchSaaSStage('auth', 'login')">&#128274; Sign In</button>
-          <button class="btn btn-purple btn-sm" onclick="switchSaaSStage('lite')">&#127760; Check Your Domain Free &rarr;</button>
+          <button class="btn btn-outline btn-sm" onclick="switchSaaSStage('auth', 'login')">Sign In</button>
+          <button class="btn btn-purple btn-sm" onclick="switchSaaSStage('lite')">Check Domain Free</button>
         </div>
       </header>
 
       <section class="mkt-hero">
-        <span class="badge sev-medium" style="margin-bottom:14px; font-size:0.75rem; padding:5px 14px;">
+        <span class="badge sev-medium" style="margin-bottom:14px; font-size:0.74rem; padding:5px 14px;">
           NIST FIPS 203 (ML-KEM) &middot; FIPS 204 (ML-DSA) &middot; FIPS 205 (SLH-DSA) &middot; OpenSSL 3.5+ Engine
         </span>
-        <h2 style="font-size:2.35rem; font-weight:900; letter-spacing:-0.03em; color:var(--text-main); max-width:860px; margin:10px auto 14px; line-height:1.15;">
-          Defeat <span style="color:var(--purple);">Harvest-Now-Decrypt-Later</span> Before Q-Day Arrives.
+        <h2 style="font-size:2.3rem; font-weight:900; letter-spacing:-0.03em; color:var(--text-main); max-width:840px; margin:10px auto 14px; line-height:1.15;">
+          Protect Your Infrastructure Against <span style="color:var(--purple);">Quantum Decryption</span>
         </h2>
-        <p style="font-size:1.02rem; color:var(--text-secondary); max-width:760px; margin:0 auto 24px; line-height:1.6;">
-          Quantum Guard is an autonomous Post-Quantum Cryptography (PQC) Assessment, CycloneDX 1.6 CBOM, Mosca Shelf-Life Risk ($X + Y &gt; Z$), and 3-Wave Migration Platform built for modern enterprises.
+        <p style="font-size:1rem; color:var(--text-secondary); max-width:720px; margin:0 auto 24px; line-height:1.6;">
+          Discover vulnerable encryption across your domains and servers, measure Harvest-Now-Decrypt-Later risk, and upgrade to NIST Post-Quantum standards in one unified platform.
         </p>
 
-        <div style="display:flex; justify-content:center; gap:10px; flex-wrap:wrap; max-width:680px; margin:0 auto;">
+        <div style="display:flex; justify-content:center; gap:10px; flex-wrap:wrap; max-width:660px; margin:0 auto;">
           <input
             type="text"
             id="mkt-domain-input"
-            placeholder="Enter domain to test (e.g. cloudflare.com, google.com, veerbhanushali.in)..."
-            style="flex:1; min-width:280px; padding:12px 16px; font-size:0.92rem; border:2px solid var(--purple); border-radius:12px;"
+            placeholder="Enter domain to check (e.g. cloudflare.com, google.com, veerbhanushali.in)"
+            style="flex:1; min-width:280px; padding:12px 16px; font-size:0.92rem; border:1.5px solid var(--purple); border-radius:12px;"
             onkeydown="if(event.key==='Enter')startDomainCheckFromMarketing()"
           />
           <button class="btn btn-purple" style="padding:12px 22px; font-size:0.92rem;" onclick="startDomainCheckFromMarketing()">
-            &#127760; Launch Free Domain Check &rarr;
+            Check Domain Readiness
           </button>
         </div>
         <div style="margin-top:12px; font-size:0.76rem; color:var(--text-muted);">
-          Step 1: Instant Public TLS 1.3 PQC Check &rarr; Step 2: Sign In to Unlock Full 3-Wave Remediation, PDF Report &amp; 5-Tab Enterprise Workspace
+          Instant public TLS 1.3 check &middot; Sign in to unlock the full dashboard and PDF compliance report
         </div>
       </section>
 
-      <!-- 4 Core Platform Pillars -->
       <div id="mkt-features" class="mkt-grid-4">
         <div class="mkt-card">
-          <span class="badge sev-medium">01 &middot; AUTONOMOUS AGENT DAG</span>
-          <h3 style="margin:10px 0 6px; font-size:1rem;">7-Node Execution Graph with Feedback Loop</h3>
+          <span class="badge sev-medium">01 &middot; EXECUTIVE VISIBILITY</span>
+          <h3 style="margin:10px 0 6px; font-size:1rem;">Unified Readiness Dashboard</h3>
           <p style="font-size:0.82rem; color:var(--text-secondary); margin:0;">
-            Probes live TLS 1.3 endpoints, AST source code (17 rules), and X.509 chains. Self-healing Reflect Gate loops back automatically when classical RSA/ECC is detected.
+            Track your organization's Post-Quantum Readiness score, vulnerable endpoints, and 3-wave upgrade progress in real time.
           </p>
         </div>
         <div class="mkt-card">
-          <span class="badge sev-critical">02 &middot; MOSCA HNDL ENGINE</span>
-          <h3 style="margin:10px 0 6px; font-size:1rem;">CycloneDX 1.6 CBOM &amp; $X + Y &gt; Z$ Scoring</h3>
+          <span class="badge sev-critical">02 &middot; AUTONOMOUS AGENT DAG</span>
+          <h3 style="margin:10px 0 6px; font-size:1rem;">7-Node Execution Graph</h3>
           <p style="font-size:0.82rem; color:var(--text-secondary); margin:0;">
-            Flags Harvest-Now-Decrypt-Later urgency when data secrecy shelf-life ($X$) plus migration duration ($Y$) exceeds the quantum computer horizon ($Z$).
+            Automatically scans TLS endpoints, source code, and certificates with a self-healing feedback loop when legacy encryption is found.
           </p>
         </div>
         <div class="mkt-card">
-          <span class="badge sev-ok">03 &middot; 3-WAVE AUTO-MIGRATION</span>
-          <h3 style="margin:10px 0 6px; font-size:1rem;">PQC PKI CAs, Dual-Certs &amp; AES-256-GCM Vault</h3>
+          <span class="badge sev-ok">03 &middot; ONE-CLICK MIGRATION</span>
+          <h3 style="margin:10px 0 6px; font-size:1rem;">PQC Certificates &amp; Key Vault</h3>
           <p style="font-size:0.82rem; color:var(--text-secondary); margin:0;">
-            Issues ML-DSA-87, ML-DSA-65, and SLH-DSA-128s certificates, serves dual Classical + PQC chains simultaneously, and encrypts private keys at rest (`.key.enc`).
+            Upgrade endpoints to hybrid ML-KEM-768, issue ML-DSA certificates, and protect private keys at rest with AES-256-GCM encryption.
           </p>
         </div>
         <div class="mkt-card">
-          <span class="badge sev-low">04 &middot; EMPIRICAL PROOF LAB</span>
-          <h3 style="margin:10px 0 6px; font-size:1rem;">Hybrid Combiner, Q-Day Replay &amp; C-Benchmarks</h3>
+          <span class="badge sev-low">04 &middot; INTERACTIVE PROOF</span>
+          <h3 style="margin:10px 0 6px; font-size:1rem;">Quantum Lab &amp; Speed Tests</h3>
           <p style="font-size:0.82rem; color:var(--text-secondary); margin:0;">
-            Combines `X25519 + ML-KEM-768` via HKDF-SHA256, simulates Q-Day Shor key recovery, and benchmarks in-process `openssl speed` throughput.
+            Test how hybrid encryption stops quantum attacks in plain English and compare algorithm speeds side by side.
           </p>
         </div>
       </div>
 
-      <!-- Target Audience & RBAC + NIST IR 8547 Timeline -->
       <div id="mkt-roles" class="grid-2" style="margin-top:20px;">
         <div class="mkt-card">
-          <h3 style="margin:0 0 10px; font-size:1rem;">Built for Every Enterprise Security Role (Supabase RBAC)</h3>
+          <h3 style="margin:0 0 10px; font-size:1rem;">Role-Based Access Control (Supabase Cloud)</h3>
           <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; font-size:0.8rem;">
             <div style="padding:10px; border:1px solid #e2e8f0; border-radius:10px;">
-              <b style="color:var(--purple);">CISO / Executive Viewer</b><br/>
-              <span style="color:var(--text-secondary);">Organization readiness KPIs, board PDF reports &amp; Resend email briefings.</span>
+              <b style="color:var(--purple);">CISO / Executive</b><br/>
+              <span style="color:var(--text-secondary);">Readiness posture, board PDF reports, and email summaries.</span>
             </div>
             <div style="padding:10px; border:1px solid #e2e8f0; border-radius:10px;">
-              <b style="color:var(--blue);">SecOps / Discovery Analyst</b><br/>
-              <span style="color:var(--text-secondary);">Live TLS 1.3 scanning, AST code discovery &amp; CycloneDX 1.6 CBOM export.</span>
+              <b style="color:var(--blue);">SecOps Analyst</b><br/>
+              <span style="color:var(--text-secondary);">Live endpoint discovery, risk scoring, and CBOM inventory.</span>
             </div>
             <div style="padding:10px; border:1px solid #e2e8f0; border-radius:10px;">
-              <b style="color:var(--green);">PKI &amp; Crypto Admin</b><br/>
-              <span style="color:var(--text-secondary);">1-click 3-Wave auto-migration, ML-DSA/SLH-DSA CA issuance &amp; Key Vault rotation.</span>
+              <b style="color:var(--green);">PKI Administrator</b><br/>
+              <span style="color:var(--text-secondary);">Certificate issuance, 3-wave migration, and key rotation.</span>
             </div>
             <div style="padding:10px; border:1px solid #e2e8f0; border-radius:10px;">
               <b style="color:var(--red);">Compliance Auditor</b><br/>
-              <span style="color:var(--text-secondary);">NIST IR 8547 compliance verification &amp; immutable cryptographic audit logs.</span>
+              <span style="color:var(--text-secondary);">NIST IR 8547 verification and immutable audit trail.</span>
             </div>
           </div>
         </div>
 
         <div id="mkt-timeline" class="mkt-card" style="display:flex; flex-direction:column; justify-content:space-between;">
           <div>
-            <h3 style="margin:0 0 10px; font-size:1rem;">NIST IR 8547 Mandate Timeline</h3>
-            <ul style="font-size:0.82rem; color:var(--text-secondary); padding-left:18px; margin:0; line-height:1.7;">
-              <li><b>Aug 2024:</b> NIST publishes final FIPS 203 (`ML-KEM`), FIPS 204 (`ML-DSA`), and FIPS 205 (`SLH-DSA`).</li>
-              <li><b style="color:var(--green);">2026 (Today):</b> Mandatory CBOM inventory &amp; Hybrid `X25519MLKEM768` rollout window to stop HNDL wiretapping.</li>
-              <li><b style="color:var(--purple);">2030:</b> Classical RSA-2048, ECDSA P-256, and X25519 **Deprecated**.</li>
-              <li><b style="color:var(--red);">2035:</b> Classical public-key cryptography **Disallowed** across federal &amp; regulated systems.</li>
+            <h3 style="margin:0 0 10px; font-size:1rem;">NIST Transition Deadlines (IR 8547)</h3>
+            <ul style="font-size:0.82rem; color:var(--text-secondary); padding-left:18px; margin:0; line-height:1.75;">
+              <li><b>2024:</b> NIST publishes final FIPS 203 (ML-KEM), FIPS 204 (ML-DSA), and FIPS 205 (SLH-DSA).</li>
+              <li><b style="color:var(--green);">2026 (Now):</b> Active hybrid rollout window to prevent Harvest-Now-Decrypt-Later attacks.</li>
+              <li><b style="color:var(--purple);">2030:</b> Classical RSA-2048, ECDSA, and ECDH officially deprecated.</li>
+              <li><b style="color:var(--red);">2035:</b> Classical public-key algorithms disallowed across regulated systems.</li>
             </ul>
           </div>
           <div style="margin-top:14px; display:flex; gap:10px; justify-content:flex-end;">
-            <button class="btn btn-purple btn-sm" onclick="switchSaaSStage('lite')">Start Step 1: Check Your Domain &rarr;</button>
-            <button class="btn btn-outline btn-sm" onclick="switchSaaSStage('auth', 'register')">Create Enterprise Account</button>
+            <button class="btn btn-purple btn-sm" onclick="switchSaaSStage('lite')">Check Domain Free</button>
+            <button class="btn btn-outline btn-sm" onclick="switchSaaSStage('auth', 'register')">Create Account</button>
           </div>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- ==================== STAGE 2: SIMPLE DOMAIN CHECK DASHBOARD (NO FULL ACCESS YET) ==================== -->
+  <!-- ==================== STAGE 2: SIMPLE DOMAIN CHECK (RESTRICTED PRE-LOGIN VIEW) ==================== -->
   <div id="stage-lite" class="saas-stage">
-    <div class="mkt-shell" style="max-width:1020px;">
+    <div class="mkt-shell" style="max-width:980px;">
       <header class="mkt-nav">
         <div class="brand" style="margin:0; cursor:pointer;" onclick="switchSaaSStage('marketing')">
-          <div class="brand-orb">QG</div>
+          <img src="/static/logo.svg" alt="QG" class="qg-logo-img" />
           <div>
-            <h1 style="margin:0; font-size:1.05rem;">Quantum Guard &mdash; Public Domain Scanner</h1>
-            <div class="brand-sub">Step 1 of 2: Free Live TLS 1.3 Post-Quantum Readiness Check</div>
+            <h1 style="margin:0; font-size:1.05rem;">Quantum Guard &mdash; Domain Check</h1>
+            <div class="brand-sub">Instant Public TLS 1.3 Post-Quantum Readiness Assessment</div>
           </div>
         </div>
         <div style="display:flex; gap:8px;">
-          <button class="btn btn-outline btn-sm" onclick="switchSaaSStage('marketing')">&larr; Back to Product Info</button>
-          <button class="btn btn-purple btn-sm" onclick="switchSaaSStage('auth', 'login')">&#128274; Sign In for Full Enterprise Dashboard</button>
+          <button class="btn btn-outline btn-sm" onclick="switchSaaSStage('marketing')">Back to Home</button>
+          <button class="btn btn-purple btn-sm" onclick="switchSaaSStage('auth', 'login')">Sign In for Full Dashboard</button>
         </div>
       </header>
 
       <div class="mkt-card" style="margin-top:20px; padding:26px;">
-        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:12px;">
-          <div>
-            <span class="badge sev-ok">&#9679; LIVE PORT 443 PQC PROBE</span>
-            <h2 style="margin:6px 0 2px; font-size:1.35rem;">Check Any Public Website's Quantum Readiness</h2>
-            <p style="margin:0; font-size:0.84rem; color:var(--text-secondary);">
-              Enter your domain below to test live TLS 1.3 hybrid key exchange (`X25519MLKEM768`) and X.509 certificate posture.
-            </p>
-          </div>
-        </div>
+        <span class="badge sev-ok">PUBLIC ENDPOINT CHECK</span>
+        <h2 style="margin:8px 0 4px; font-size:1.35rem;">Check Your Domain's Post-Quantum Readiness</h2>
+        <p style="margin:0; font-size:0.84rem; color:var(--text-secondary);">
+          Enter a public domain below to verify whether it supports quantum-safe hybrid key exchange (X25519MLKEM768) or classical encryption.
+        </p>
 
         <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:14px;">
           <input
             type="text"
             id="lite-domain-input"
             placeholder="e.g. cloudflare.com, google.com, veerbhanushali.in, github.com"
-            style="flex:1; min-width:260px; padding:11px 14px; font-size:0.92rem; border:2px solid var(--purple); border-radius:10px;"
+            style="flex:1; min-width:260px; padding:11px 14px; font-size:0.92rem; border:1.5px solid var(--purple); border-radius:10px;"
             onkeydown="if(event.key==='Enter')runLiteDomainScan()"
           />
           <button class="btn btn-purple" id="btn-lite-scan" onclick="runLiteDomainScan()" style="padding:11px 20px;">
-            &#127760; Scan Domain Now
+            Scan Domain
           </button>
         </div>
 
         <div style="margin-top:10px; display:flex; gap:6px; flex-wrap:wrap; align-items:center; font-size:0.76rem; color:var(--text-muted);">
-          <span>Quick test:</span>
+          <span>Quick samples:</span>
           <button class="btn btn-outline btn-sm" onclick="quickFillLite('cloudflare.com')">cloudflare.com</button>
           <button class="btn btn-outline btn-sm" onclick="quickFillLite('google.com')">google.com</button>
           <button class="btn btn-outline btn-sm" onclick="quickFillLite('pq.cloudflareresearch.com')">pq.cloudflareresearch.com</button>
           <button class="btn btn-outline btn-sm" onclick="quickFillLite('github.com')">github.com</button>
         </div>
 
-        <!-- Summary Teaser Output -->
         <div id="lite-scan-result-box" style="margin-top:18px; display:none;"></div>
 
-        <!-- Locked Full Dashboard & Deep Details Gate -->
         <div class="locked-gate-box" id="lite-locked-gate">
-          <span class="badge sev-medium" style="margin-bottom:8px;">&#128274; FULL ENTERPRISE WORKSPACE &amp; DEEP REPORT LOCKED</span>
-          <h3 style="margin:6px 0; font-size:1.12rem;">Want Full Remediation Details, PDF Report &amp; Complete 5-Tab Dashboard Access?</h3>
-          <p style="font-size:0.84rem; color:var(--text-secondary); max-width:680px; margin:0 auto 16px;">
-            Sign in or create a free enterprise account to unlock the **7-Node Live Agent Execution DAG**, **3-Wave Server Auto-Fix Configs**, **CycloneDX 1.6 CBOM**, **Dual-Certificate PKI &amp; AES-256-GCM Key Vault**, **Q-Day Shor Replay**, and **Resend Email Report Delivery**.
+          <span class="badge sev-medium" style="margin-bottom:8px;">FULL DASHBOARD &amp; REMEDIATION LOCKED</span>
+          <h3 style="margin:6px 0; font-size:1.1rem;">Sign In to Unlock Full Details, PDF Reports &amp; Complete Dashboard</h3>
+          <p style="font-size:0.84rem; color:var(--text-secondary); max-width:640px; margin:0 auto 16px;">
+            Create a free account or sign in to view step-by-step migration plans, download the Executive PDF Report, email reports via Resend, and access the full 5-tab workspace.
           </p>
           <div style="display:flex; justify-content:center; gap:10px; flex-wrap:wrap;">
             <button class="btn btn-purple" style="padding:10px 22px;" onclick="switchSaaSStage('auth', 'login')">
-              &#128274; Sign In to Unlock Full Dashboard &rarr;
+              Sign In to Unlock Dashboard
             </button>
             <button class="btn btn-green" style="padding:10px 22px;" onclick="switchSaaSStage('auth', 'register')">
-              &#10024; Create Free Account (RBAC)
+              Create Free Account
             </button>
           </div>
         </div>
@@ -222,94 +224,92 @@
     </div>
   </div>
 
-  <!-- ==================== STAGE 3: DEDICATED FULL-PAGE LOGIN / SIGN UP (SUPABASE RBAC) ==================== -->
+  <!-- ==================== STAGE 3: DEDICATED LOGIN / SIGN UP PAGE ==================== -->
   <div id="stage-auth" class="saas-stage">
-    <div class="mkt-shell" style="max-width:960px; display:flex; flex-direction:column; justify-content:center;">
+    <div class="mkt-shell" style="max-width:940px; display:flex; flex-direction:column; justify-content:center;">
       <header class="mkt-nav" style="margin-bottom:22px;">
         <div class="brand" style="margin:0; cursor:pointer;" onclick="switchSaaSStage('marketing')">
-          <div class="brand-orb">QG</div>
+          <img src="/static/logo.svg" alt="QG" class="qg-logo-img" />
           <div>
-            <h1 style="margin:0; font-size:1.05rem;">Quantum Guard &mdash; Enterprise Authentication</h1>
-            <div class="brand-sub">Backed by Supabase Cloud PostgreSQL (`ap-south-1`) &amp; Resend Email</div>
+            <h1 style="margin:0; font-size:1.05rem;">Quantum Guard &mdash; Account Access</h1>
+            <div class="brand-sub">Supabase Cloud Authentication &amp; Role-Based Access</div>
           </div>
         </div>
         <div style="display:flex; gap:8px;">
-          <button class="btn btn-outline btn-sm" onclick="switchSaaSStage('lite')">&larr; Back to Domain Check</button>
-          <button class="btn btn-outline btn-sm" onclick="switchSaaSStage('marketing')">Marketing Home</button>
+          <button class="btn btn-outline btn-sm" onclick="switchSaaSStage('lite')">Back to Domain Check</button>
+          <button class="btn btn-outline btn-sm" onclick="switchSaaSStage('marketing')">Home</button>
         </div>
       </header>
 
       <div class="grid-2" style="align-items:stretch;">
         <div class="mkt-card" style="display:flex; flex-direction:column; justify-content:space-between;">
           <div>
-            <span class="badge sev-ok">&#9679; SUPABASE CLOUD RBAC</span>
-            <h2 style="margin:10px 0 8px; font-size:1.4rem;">Unlock the Complete Post-Quantum Command Center</h2>
-            <p id="auth-modal-reason" style="font-size:0.85rem; color:var(--purple); font-weight:700; margin-bottom:14px;">
-              Sign in or register below to unlock full domain remediation details, Executive PDF/Email reports, and all 5 Enterprise Workspace tabs.
+            <span class="badge sev-ok">FULL PLATFORM ACCESS</span>
+            <h2 style="margin:10px 0 8px; font-size:1.35rem;">Unlock Your Complete Quantum Readiness Workspace</h2>
+            <p id="auth-modal-reason" style="font-size:0.84rem; color:var(--purple); font-weight:700; margin-bottom:14px;">
+              Sign in or register to unlock full domain diagnostics, Executive PDF &amp; Email reports, and all 5 workspace modules.
             </p>
-            <ul style="font-size:0.82rem; color:var(--text-secondary); padding-left:18px; line-height:1.75;">
-              <li><b>Live 7-Node Agent Execution DAG</b> with self-healing Reflect Gate</li>
-              <li><b>3-Wave Migration Planner</b> &amp; 1-click live TLS service reconfiguration</li>
-              <li><b>Post-Quantum PKI CAs</b> (`ML-DSA-87`, `ML-DSA-65`, `SLH-DSA-128s`) &amp; Dual-Cert demo</li>
-              <li><b>AES-256-GCM Encrypted Key Vault</b> &amp; CycloneDX 1.6 CBOM export</li>
-              <li><b>Executive Report Delivery</b> via `reports@quantumguard-lab.veerbhanushali.in`</li>
+            <ul style="font-size:0.82rem; color:var(--text-secondary); padding-left:18px; line-height:1.8;">
+              <li><b>Executive Dashboard:</b> Organization readiness score and risk summary</li>
+              <li><b>Live Agent Graph:</b> 7-node execution DAG with self-healing feedback loop</li>
+              <li><b>Discovery &amp; Risk:</b> Endpoint inventory, CBOM export, and Mosca risk sliders</li>
+              <li><b>Migration &amp; PKI:</b> 1-click PQC upgrade, certificate authority, and key vault</li>
+              <li><b>Quantum Lab &amp; Speed:</b> Plain-English encryption tests and speed benchmarks</li>
             </ul>
           </div>
           <div style="padding-top:12px; border-top:1px solid #e2e8f0; font-size:0.75rem; color:var(--text-muted);">
-            Protected by HMAC-SHA256 JWT Session Tokens &amp; Role-Based Access Control (`CISO`, `SecOps`, `PKI Admin`, `Auditor`).
+            Secured by Supabase PostgreSQL &middot; Role-Based Access Control (CISO, SecOps, PKI Admin, Auditor)
           </div>
         </div>
 
         <div class="mkt-card" style="border-color:var(--purple);">
           <div class="sub-nav" style="width:100%; display:flex; margin-bottom:14px;">
             <button class="sub-btn active" id="tab-btn-login" style="flex:1;" onclick="switchAuthTab('login')">Sign In</button>
-            <button class="sub-btn" id="tab-btn-register" style="flex:1;" onclick="switchAuthTab('register')">Create Account (RBAC)</button>
+            <button class="sub-btn" id="tab-btn-register" style="flex:1;" onclick="switchAuthTab('register')">Create Account</button>
           </div>
 
-          <!-- Sign In Form -->
           <div id="auth-form-login">
             <div style="margin-bottom:10px;">
-              <label style="font-size:0.76rem; font-weight:700; color:var(--text-secondary);">Work or Personal Email</label>
+              <label style="font-size:0.76rem; font-weight:700; color:var(--text-secondary);">Email Address</label>
               <input type="text" id="login-email" placeholder="you@company.com" style="margin-top:4px;" />
             </div>
             <div style="margin-bottom:14px;">
               <label style="font-size:0.76rem; font-weight:700; color:var(--text-secondary);">Password</label>
-              <input type="password" id="login-password" placeholder="••••••••" style="width:100%; background:#fff; border:1.5px solid #cbd5e1; padding:8px 11px; border-radius:9px; margin-top:4px;" onkeydown="if(event.key==='Enter')submitLogin()" />
+              <input type="password" id="login-password" placeholder="Enter password" style="width:100%; background:#fff; border:1.5px solid #cbd5e1; padding:8px 11px; border-radius:9px; margin-top:4px;" onkeydown="if(event.key==='Enter')submitLogin()" />
             </div>
             <button class="btn btn-purple" style="width:100%; padding:10px;" onclick="submitLogin()">
-              &#128274; Sign In &amp; Open Full Enterprise Dashboard &rarr;
+              Sign In to Dashboard
             </button>
           </div>
 
-          <!-- Sign Up Form with Role Selection -->
           <div id="auth-form-register" style="display:none;">
             <div style="margin-bottom:8px;">
               <label style="font-size:0.75rem; font-weight:700; color:var(--text-secondary);">Full Name</label>
               <input type="text" id="reg-name" placeholder="Veer Bhanushali" style="margin-top:3px;" />
             </div>
             <div style="margin-bottom:8px;">
-              <label style="font-size:0.75rem; font-weight:700; color:var(--text-secondary);">Organization / Company</label>
+              <label style="font-size:0.75rem; font-weight:700; color:var(--text-secondary);">Organization</label>
               <input type="text" id="reg-org" placeholder="Quantum Guard Lab" style="margin-top:3px;" />
             </div>
             <div style="margin-bottom:8px;">
-              <label style="font-size:0.75rem; font-weight:700; color:var(--text-secondary);">Enterprise Role (RBAC)</label>
+              <label style="font-size:0.75rem; font-weight:700; color:var(--text-secondary);">Role</label>
               <select id="reg-role" style="margin-top:3px;">
-                <option value="ciso">CISO / Executive Viewer (Read &amp; Reports)</option>
-                <option value="secops">SecOps / Discovery Analyst (Scan &amp; CBOM)</option>
-                <option value="pki_admin">PKI &amp; Crypto Administrator (Full Auto-Migrate &amp; CA)</option>
-                <option value="auditor">Compliance Auditor (NIST IR 8547 &amp; Audit Trail)</option>
+                <option value="ciso">CISO / Executive Viewer</option>
+                <option value="secops">SecOps / Discovery Analyst</option>
+                <option value="pki_admin">PKI &amp; Crypto Administrator</option>
+                <option value="auditor">Compliance Auditor</option>
               </select>
             </div>
             <div style="margin-bottom:8px;">
-              <label style="font-size:0.75rem; font-weight:700; color:var(--text-secondary);">Email Address (For Resend Report Delivery)</label>
+              <label style="font-size:0.75rem; font-weight:700; color:var(--text-secondary);">Email Address</label>
               <input type="text" id="reg-email" placeholder="you@company.com" style="margin-top:3px;" />
             </div>
             <div style="margin-bottom:14px;">
-              <label style="font-size:0.75rem; font-weight:700; color:var(--text-secondary);">Password (min 6 chars)</label>
-              <input type="password" id="reg-password" placeholder="••••••••" style="width:100%; background:#fff; border:1.5px solid #cbd5e1; padding:8px 11px; border-radius:9px; margin-top:3px;" onkeydown="if(event.key==='Enter')submitRegister()" />
+              <label style="font-size:0.75rem; font-weight:700; color:var(--text-secondary);">Password (min 6 characters)</label>
+              <input type="password" id="reg-password" placeholder="Create password" style="width:100%; background:#fff; border:1.5px solid #cbd5e1; padding:8px 11px; border-radius:9px; margin-top:3px;" onkeydown="if(event.key==='Enter')submitRegister()" />
             </div>
             <button class="btn btn-green" style="width:100%; padding:10px;" onclick="submitRegister()">
-              &#10024; Create Account &amp; Unlock Full Dashboard &rarr;
+              Create Account &amp; Open Dashboard
             </button>
           </div>
         </div>
@@ -317,99 +317,187 @@
     </div>
   </div>
 
-  <!-- ==================== STAGE 4: FULL 5-TAB ENTERPRISE WORKSPACE (UNLOCKED AFTER LOGIN) ==================== -->
+  <!-- ==================== STAGE 4: FULL 5-TAB WORKSPACE (DASHBOARD FIRST, GRAPH SECOND) ==================== -->
   <div class="app-layout saas-stage" id="stage-workspace">
-    <!-- ==================== LEFT SIDEBAR (CLEAN CANVA-STYLE SHELL) ==================== -->
     <aside class="sidebar">
       <div>
-        <div class="brand" style="cursor:pointer;" onclick="switchSaaSStage('marketing')" title="Back to Marketing Page">
-          <div class="brand-orb">QG</div>
+        <div class="brand" style="cursor:pointer;" onclick="switchSaaSStage('marketing')" title="Back to Home">
+          <img src="/static/logo.svg" alt="QG" class="qg-logo-img" />
           <div>
             <h1>Quantum Guard</h1>
-            <div class="brand-sub">NIST FIPS 203 · 204 · 205</div>
+            <div class="brand-sub">NIST FIPS 203 &middot; 204 &middot; 205</div>
           </div>
         </div>
 
         <nav class="nav-menu" id="main-nav">
           <div class="nav-label">Workspace</div>
-          <button class="nav-btn active" data-tab="pipeline">
-            <span class="nav-dot"></span> Live Agent Flow
+          <button class="nav-btn active" data-tab="overview">
+            <span class="nav-dot"></span> Executive Dashboard
           </button>
-          <button class="nav-btn" data-tab="overview">
-            <span class="nav-dot"></span> Executive Overview
+          <button class="nav-btn" data-tab="pipeline">
+            <span class="nav-dot"></span> Live Agent Graph
           </button>
           <button class="nav-btn" data-tab="discovery">
-            <span class="nav-dot"></span> Discovery &amp; Mosca Risk
+            <span class="nav-dot"></span> Discovery &amp; Risk
           </button>
           <button class="nav-btn" data-tab="migration">
-            <span class="nav-dot"></span> Migration, PKI &amp; Vault
+            <span class="nav-dot"></span> Migration &amp; PKI
           </button>
           <button class="nav-btn" data-tab="hybrid">
-            <span class="nav-dot"></span> Hybrid Lab &amp; Benchmarks
+            <span class="nav-dot"></span> Crypto Lab &amp; Speed
           </button>
         </nav>
       </div>
 
       <div class="sidebar-footer">
-        <div class="runtime-pill" id="cap-text">
-          Checking OpenSSL 3.5+ PQC runtime...
-        </div>
-        <div style="display:flex; gap:6px;">
+        <div style="display:flex; gap:8px;">
           <button class="btn btn-red btn-sm" style="flex:1;" id="btn-reset-demo" onclick="resetDemoUI()">Reset</button>
-          <button class="btn btn-outline btn-sm" style="flex:1;" onclick="openProtectedEnterpriseReport()">&#128274; PDF Report</button>
+          <button class="btn btn-purple btn-sm" style="flex:1;" onclick="openProtectedEnterpriseReport()">PDF Report</button>
         </div>
       </div>
     </aside>
 
     <!-- ==================== MAIN WORKSPACE ==================== -->
     <main class="workspace">
-      <!-- Degraded Capability Warning (hidden when OpenSSL 3.5+ is active) -->
-      <div class="cap-degraded" id="cap-degraded" style="display:none; margin-bottom:16px; border-radius:12px;"></div>
+      <div class="cap-degraded" id="cap-degraded" style="display:none; margin-bottom:14px; border-radius:12px;"></div>
 
-      <!-- SaaS Command Header: Target Scanner + Launch Agent + Supabase & RBAC Auth -->
+      <!-- Clean Top Command Bar (No Emojis, Runtime Pill Cleanly Placed, No "Full Enterprise Demo" Clutter) -->
       <div class="aurora-hero">
-        <div style="display:flex; align-items:center; gap:10px; flex:1; min-width:300px;">
+        <div style="display:flex; align-items:center; gap:8px; flex:1; min-width:280px;">
           <input
             type="text"
             id="saas-target-input"
-            placeholder="Enter target domain to scan (e.g. cloudflare.com, google.com, veerbhanushali.in)..."
-            style="max-width:420px; border-color:var(--purple);"
+            placeholder="Scan any domain (e.g. cloudflare.com, google.com, veerbhanushali.in)..."
+            style="max-width:380px; border-color:var(--purple);"
             onkeydown="if(event.key==='Enter')runSaaSTargetScan()"
           />
-          <button class="btn btn-purple" id="btn-saas-scan" onclick="runSaaSTargetScan()">&#127760; Scan Target</button>
-          <button class="btn btn-blue" id="btn-guided-demo" onclick="runGuidedDemo()">&#10024; Full Enterprise Demo</button>
+          <button class="btn btn-purple btn-sm" id="btn-saas-scan" onclick="runSaaSTargetScan()">Scan Domain</button>
         </div>
         <div class="hero-actions">
-          <span class="badge sev-ok" id="supabase-badge" title="Connected to Supabase PostgreSQL (ap-south-1)">&#9679; Supabase Cloud</span>
-          <a class="btn btn-outline btn-sm" id="btn-cbom-download" href="/api/cbom/1" target="_blank">&#11015; CBOM</a>
+          <div class="runtime-header-pill" id="cap-text" title="Active Cryptographic Engine">
+            <span class="runtime-dot"></span>
+            <span>OpenSSL 3.5+ Ready</span>
+          </div>
+          <span class="badge sev-ok" id="supabase-badge">Supabase Cloud</span>
+          <a class="btn btn-outline btn-sm" id="btn-cbom-download" href="/api/cbom/1" target="_blank">Export CBOM</a>
           <div id="auth-bar-area" style="display:inline-flex; align-items:center; gap:6px;">
-            <button class="btn btn-purple btn-sm" id="btn-open-auth" onclick="openAuthModal('login')">&#128274; Sign In / Sign Up</button>
+            <button class="btn btn-purple btn-sm" id="btn-open-auth" onclick="openAuthModal('login')">Sign In</button>
           </div>
         </div>
       </div>
 
-      <!-- Guided Demo Progress Strip -->
-      <div class="demo-progress-bar" id="demo-banner" style="border-radius:12px; margin-bottom:20px;">
-        <span id="demo-step-text">Agent Pipeline Running...</span>
+      <!-- Target Scan Result Strip (Appears when a custom domain is scanned) -->
+      <div id="saas-target-result-bar" style="display:none; margin-bottom:16px;"></div>
+
+      <!-- Guided Pipeline Progress Strip -->
+      <div class="demo-progress-bar" id="demo-banner" style="border-radius:12px; margin-bottom:16px;">
+        <span id="demo-step-text">Running Automated Assessment...</span>
         <span id="demo-step-pct">0%</span>
       </div>
 
-      <!-- ==================== PAGE 1 (DEFAULT): LIVE AGENT FLOW ==================== -->
-      <section class="tab-section active" id="tab-pipeline">
+      <!-- ==================== TAB 1 (FIRST DEFAULT): EXECUTIVE DASHBOARD ==================== -->
+      <section class="tab-section active" id="tab-overview">
+        <div class="section-header">
+          <div>
+            <h2>Executive Readiness Dashboard</h2>
+            <p>Clear summary of your quantum readiness score, vulnerable services, and migration progress.</p>
+          </div>
+          <div style="display:flex; gap:8px;">
+            <button class="btn btn-blue btn-sm" onclick="triggerScan('before')">Scan Services</button>
+            <button class="btn btn-green btn-sm" onclick="applyMigrationPlan()">Upgrade Network to PQC</button>
+            <button class="btn btn-outline btn-sm" onclick="openProtectedEnterpriseReport()">Download PDF Report</button>
+          </div>
+        </div>
+
+        <!-- 4 Clean, Uncluttered KPI Cards -->
+        <div class="kpi-grid-4">
+          <div class="kpi-card kpi-blue">
+            <div class="kpi-label">Quantum Readiness Score</div>
+            <div class="kpi-value" id="kpi-readiness">0%</div>
+            <div class="kpi-sub" id="kpi-net-readiness">Network TLS: 0%</div>
+          </div>
+          <div class="kpi-card kpi-red">
+            <div class="kpi-label">Urgent HNDL Risks</div>
+            <div class="kpi-value" style="color:var(--red)" id="kpi-hndl">0</div>
+            <div class="kpi-sub"><span id="kpi-critical">0</span> critical classical endpoints</div>
+          </div>
+          <div class="kpi-card kpi-green">
+            <div class="kpi-label">Network Upgrade Progress</div>
+            <div class="kpi-value" style="color:var(--green)" id="kpi-migration">0%</div>
+            <div class="kpi-sub" id="kpi-migration-sub">0 / 0 services upgraded</div>
+          </div>
+          <div class="kpi-card kpi-purple">
+            <div class="kpi-label">Active PQC Certificates</div>
+            <div class="kpi-value" style="color:var(--purple)" id="kpi-pqc-certs">0</div>
+            <div class="kpi-sub"><span id="kpi-keys-due">0</span> encrypted keys in vault (<span id="kpi-keys-sub">AES-256-GCM</span>)</div>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div class="card">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+              <h3 style="margin:0;">Service Encryption Posture</h3>
+              <span style="font-size:0.74rem; color:var(--text-muted);">Green = Quantum-Safe &middot; Red = Needs Upgrade</span>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Service / Endpoint</th>
+                    <th>Key Exchange</th>
+                    <th>Signature</th>
+                    <th>Symmetric</th>
+                    <th>Protocol</th>
+                  </tr>
+                </thead>
+                <tbody id="heatmap-tbody">
+                  <tr><td colspan="5">Loading service posture...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="card">
+            <h3 style="margin:0 0 10px;">3-Wave Upgrade Progress &amp; NIST Deadlines</h3>
+            <div class="chart-box" style="height:175px; margin-bottom:14px;">
+              <canvas id="chart-overview-waves"></canvas>
+            </div>
+            <div class="timeline" style="font-size:0.8rem;">
+              <div class="tl-item">
+                <div class="tl-dot"></div>
+                <b>2024 &mdash; NIST FIPS 203 (ML-KEM), FIPS 204 (ML-DSA), FIPS 205 (SLH-DSA)</b>
+              </div>
+              <div class="tl-item today">
+                <div class="tl-dot"></div>
+                <b style="color:var(--green)">Today (<span id="tl-today-date">2026</span>) &mdash; Active Hybrid PQC Rollout Window</b>
+              </div>
+              <div class="tl-item warn">
+                <div class="tl-dot"></div>
+                <b style="color:var(--purple)">2030 &mdash; Classical RSA / ECDSA / ECDH Deprecated (NIST IR 8547)</b>
+              </div>
+              <div class="tl-item crit" style="margin-bottom:0;">
+                <div class="tl-dot"></div>
+                <b style="color:var(--red)">2035 &mdash; Classical Public-Key Algorithms Disallowed</b>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==================== TAB 2 (SECOND): LIVE AGENT GRAPH (DAG WITH FEEDBACK LOOP) ==================== -->
+      <section class="tab-section" id="tab-pipeline">
         <div class="agent-stage-wrapper">
-          <!-- Ambient Glowing Orbs Behind Glass Stage -->
           <div class="ambient-orb orb-1"></div>
           <div class="ambient-orb orb-2"></div>
           <div class="ambient-orb orb-3"></div>
 
           <div class="dag-header-row">
             <div class="dag-title-group">
-              <span style="font-size:1.35rem; color:#64748b;">&#10050;</span>
               <h2>Agent Execution Graph (DAG with Feedback Loop)</h2>
             </div>
             <div class="stage-status-pill">
               <span class="pulse-dot purple" id="graph-pulse-dot"></span>
-              <span id="graph-stage-label">Agent Ready — Click "Launch Live Agent" to stream live PQC discovery &amp; migration</span>
+              <span id="graph-stage-label">Agent Ready &mdash; Click "Run Full Pipeline" to execute live discovery and migration</span>
             </div>
           </div>
 
@@ -418,21 +506,19 @@
               <span class="dag-legend-pill"><i class="dot green"></i> Completed</span>
               <span class="dag-legend-pill"><i class="dot blue"></i> Active Working</span>
               <span class="dag-legend-pill"><i class="dot purple"></i> Feedback Loop</span>
-              <span class="dag-legend-pill"><i class="dot red"></i> HNDL / Vulnerable</span>
+              <span class="dag-legend-pill"><i class="dot red"></i> Vulnerable</span>
               <span class="dag-legend-pill"><i class="dot pending"></i> Pending</span>
             </div>
             <div style="display:flex; gap:8px;">
-              <button class="btn btn-purple btn-sm" onclick="runGuidedDemo()">&#9654; Run Full DAG Pipeline</button>
+              <button class="btn btn-purple btn-sm" onclick="runGuidedDemo()">Run Full Pipeline</button>
               <button class="btn btn-blue btn-sm" onclick="triggerScan('before')">Scan Only</button>
-              <button class="btn btn-green btn-sm" onclick="applyMigrationPlan()">Apply PQC Auto-Fix</button>
+              <button class="btn btn-green btn-sm" onclick="applyMigrationPlan()">Apply PQC Upgrade</button>
             </div>
           </div>
 
-          <!-- Spacious Dotted Grid DAG Canvas (7 Nodes + Curved Purple Feedback Loop) -->
           <div class="dag-canvas-box">
             <svg class="dag-svg" viewBox="0 0 1160 390" xmlns="http://www.w3.org/2000/svg">
               <defs>
-                <!-- Arrowheads matching state colors -->
                 <marker id="arrow-pending" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
                   <path d="M 0 1.5 L 8.5 5 L 0 8.5 z" fill="#cbd5e1" />
                 </marker>
@@ -450,33 +536,21 @@
                 </marker>
               </defs>
 
-              <!-- ==================== DIRECTED S-CURVE EDGES ==================== -->
-              <!-- 01 -> 02 and 01 -> 03 -->
               <path id="dag-edge-1-2" class="dag-edge state-pending" fill="none" d="M 205 182 C 250 182, 240 96, 282 96" marker-end="url(#arrow-pending)" />
               <path id="dag-edge-1-3" class="dag-edge state-pending" fill="none" d="M 205 208 C 250 208, 240 294, 282 294" marker-end="url(#arrow-pending)" />
-
-              <!-- Curved Feedback Loop: 03 (Reflect Gate) -> 02 (TLS & Code Recon) -->
               <path id="dag-edge-loop" class="dag-edge state-feedback" fill="none" d="M 358 260 C 312 220, 312 170, 358 134" marker-end="url(#arrow-feedback)" />
-              <!-- Feedback Loop Pill Badge -->
               <g transform="translate(222, 181)" onclick="selectDagNode(3)" onmouseenter="selectDagNode(3)" style="cursor:pointer;">
                 <rect class="feedback-pill-rect" fill="#ffffff" x="0" y="0" width="114" height="26" rx="13" />
-                <text class="feedback-pill-text" x="57" y="16" text-anchor="middle">&#8635; FEEDBACK LOOP</text>
+                <text class="feedback-pill-text" x="57" y="16" text-anchor="middle">FEEDBACK LOOP</text>
               </g>
 
-              <!-- 02 -> 04 and 03 -> 04 -->
               <path id="dag-edge-2-4" class="dag-edge state-pending" fill="none" d="M 461 96 C 502 96, 492 182, 532 182" marker-end="url(#arrow-pending)" />
               <path id="dag-edge-3-4" class="dag-edge state-pending" fill="none" d="M 461 294 C 502 294, 492 208, 532 208" marker-end="url(#arrow-pending)" />
-
-              <!-- 04 -> 05 and 04 -> 06 -->
               <path id="dag-edge-4-5" class="dag-edge state-pending" fill="none" d="M 711 182 C 745 182, 735 96, 767 96" marker-end="url(#arrow-pending)" />
               <path id="dag-edge-4-6" class="dag-edge state-pending" fill="none" d="M 711 208 C 745 208, 735 294, 767 294" marker-end="url(#arrow-pending)" />
-
-              <!-- 05 -> 07 and 06 -> 07 -->
               <path id="dag-edge-5-7" class="dag-edge state-pending" fill="none" d="M 946 96 C 966 96, 958 182, 977 182" marker-end="url(#arrow-pending)" />
               <path id="dag-edge-6-7" class="dag-edge state-pending" fill="none" d="M 946 294 C 966 294, 958 208, 977 208" marker-end="url(#arrow-pending)" />
 
-              <!-- ==================== 7 DAG NODES ==================== -->
-              <!-- NODE 01: Scope & TLS Init -->
               <g id="dag-node-1" class="dag-node state-pending" transform="translate(30, 161)" onclick="selectDagNode(1)" onmouseenter="selectDagNode(1)">
                 <rect class="dag-node-rect" fill="#ffffff" x="0" y="0" width="175" height="68" rx="12" />
                 <line class="dag-top-bar" x1="22" y1="0" x2="128" y2="0" />
@@ -486,7 +560,6 @@
                 <text class="dag-title-lbl" x="18" y="50">01. Scope &amp; Init</text>
               </g>
 
-              <!-- NODE 02: Tool Recon (5 TLS Ports + AST) -->
               <g id="dag-node-2" class="dag-node state-pending" transform="translate(286, 62)" onclick="selectDagNode(2)" onmouseenter="selectDagNode(2)">
                 <rect class="dag-node-rect" fill="#ffffff" x="0" y="0" width="175" height="68" rx="12" />
                 <line class="dag-top-bar" x1="22" y1="0" x2="128" y2="0" />
@@ -496,7 +569,6 @@
                 <text class="dag-title-lbl" x="18" y="50">02. Tool Recon</text>
               </g>
 
-              <!-- NODE 03: Reflect Gate (Self-Healing AST & Cert Gate) -->
               <g id="dag-node-3" class="dag-node state-pending selected" transform="translate(286, 260)" onclick="selectDagNode(3)" onmouseenter="selectDagNode(3)">
                 <rect class="dag-node-rect" fill="#ffffff" x="0" y="0" width="175" height="68" rx="12" />
                 <line class="dag-top-bar" x1="22" y1="0" x2="128" y2="0" />
@@ -506,7 +578,6 @@
                 <text class="dag-title-lbl" x="18" y="50">03. Reflect Gate</text>
               </g>
 
-              <!-- NODE 04: Observation & CycloneDX CBOM -->
               <g id="dag-node-4" class="dag-node state-pending" transform="translate(536, 161)" onclick="selectDagNode(4)" onmouseenter="selectDagNode(4)">
                 <rect class="dag-node-rect" fill="#ffffff" x="0" y="0" width="175" height="68" rx="12" />
                 <line class="dag-top-bar" x1="22" y1="0" x2="128" y2="0" />
@@ -516,7 +587,6 @@
                 <text class="dag-title-lbl" x="18" y="50">04. Observation</text>
               </g>
 
-              <!-- NODE 05: Threat Intel & PQC PKI CA -->
               <g id="dag-node-5" class="dag-node state-pending" transform="translate(771, 62)" onclick="selectDagNode(5)" onmouseenter="selectDagNode(5)">
                 <rect class="dag-node-rect" fill="#ffffff" x="0" y="0" width="175" height="68" rx="12" />
                 <line class="dag-top-bar" x1="22" y1="0" x2="128" y2="0" />
@@ -526,7 +596,6 @@
                 <text class="dag-title-lbl" x="18" y="50">05. PQC PKI &amp; Intel</text>
               </g>
 
-              <!-- NODE 06: Deep Probe & Hybrid Auto-Migrate -->
               <g id="dag-node-6" class="dag-node state-pending" transform="translate(771, 260)" onclick="selectDagNode(6)" onmouseenter="selectDagNode(6)">
                 <rect class="dag-node-rect" fill="#ffffff" x="0" y="0" width="175" height="68" rx="12" />
                 <line class="dag-top-bar" x1="22" y1="0" x2="128" y2="0" />
@@ -536,7 +605,6 @@
                 <text class="dag-title-lbl" x="18" y="50">06. Deep Migrate</text>
               </g>
 
-              <!-- NODE 07: Risk Scorer & Quantum Verifier -->
               <g id="dag-node-7" class="dag-node state-pending" transform="translate(981, 161)" onclick="selectDagNode(7)" onmouseenter="selectDagNode(7)">
                 <rect class="dag-node-rect" fill="#ffffff" x="0" y="0" width="155" height="68" rx="12" />
                 <line class="dag-top-bar" x1="20" y1="0" x2="115" y2="0" />
@@ -548,7 +616,6 @@
             </svg>
           </div>
 
-          <!-- Selected Node Inspector Bar (Exact Match to Reference Bottom Bar) -->
           <div class="dag-inspector-bar">
             <div class="dag-inspector-left">
               <div class="dag-inspector-lbl">Selected<br />Node:</div>
@@ -556,15 +623,11 @@
             </div>
             <div class="dag-inspector-divider"></div>
             <div class="dag-inspector-desc" id="dag-selected-desc">
-              Self-healing gate: detects classical RSA/ECDHE handshakes &amp; 17 AST rules. Loops back to trigger targeted PQC probe.
+              Self-healing gate: detects classical RSA/ECDHE handshakes and 17 AST rules. Loops back to trigger targeted PQC probe.
             </div>
             <div class="dag-inspector-kind" id="dag-selected-kind">Kind: DECISION</div>
           </div>
 
-          <!-- SaaS Target Scan Result & Login-Gated Report Bar -->
-          <div id="saas-target-result-bar" style="display:none; position:relative; z-index:3; margin-top:12px;"></div>
-
-          <!-- 5 Live Enterprise Service Pills -->
           <div class="endpoint-nodes-strip">
             <div class="endpoint-pill-card" id="ep-card-legacy-web" onclick="switchTab('discovery')">
               <div class="ep-name">
@@ -573,7 +636,6 @@
               </div>
               <div class="ep-profile" id="ep-prof-legacy-web">legacy_tls12_rsa</div>
             </div>
-
             <div class="endpoint-pill-card" id="ep-card-customer-api" onclick="switchTab('discovery')">
               <div class="ep-name">
                 <span>customer-api (:9442)</span>
@@ -581,7 +643,6 @@
               </div>
               <div class="ep-profile" id="ep-prof-customer-api">tls13_ecdhe_ecdsa</div>
             </div>
-
             <div class="endpoint-pill-card" id="ep-card-payments-core" onclick="switchTab('discovery')">
               <div class="ep-name">
                 <span>payments-core (:9443)</span>
@@ -589,7 +650,6 @@
               </div>
               <div class="ep-profile" id="ep-prof-payments-core">tls13_ecdhe_rsa (15y)</div>
             </div>
-
             <div class="endpoint-pill-card" id="ep-card-hr-records" onclick="switchTab('discovery')">
               <div class="ep-name">
                 <span>hr-records (:9444)</span>
@@ -597,7 +657,6 @@
               </div>
               <div class="ep-profile" id="ep-prof-hr-records">tls13_ecdhe_ecdsa (25y)</div>
             </div>
-
             <div class="endpoint-pill-card" id="ep-card-pqc-pilot" onclick="switchTab('discovery')">
               <div class="ep-name">
                 <span>pqc-pilot (:9445)</span>
@@ -607,15 +666,14 @@
             </div>
           </div>
 
-          <!-- Live Telemetry Feed -->
           <div style="position:relative; z-index:3; margin-top:10px;">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
               <b style="font-size:0.78rem; color:var(--text-secondary);">Live Agent Activity Stream</b>
-              <span style="font-size:0.72rem; color:var(--text-muted);">Hover or click any DAG node above to inspect</span>
+              <span style="font-size:0.72rem; color:var(--text-muted);">Hover or click any node above to inspect</span>
             </div>
             <div class="telemetry-feed" id="graph-telemetry-feed">
               <div class="telemetry-item purple">
-                <span><b>[READY]</b> Click "Launch Live Agent" above to watch each stage light up in real time.</span>
+                <span><b>[READY]</b> Click "Run Full Pipeline" above to watch each stage execute in real time.</span>
                 <code>IDLE</code>
               </div>
             </div>
@@ -623,130 +681,38 @@
         </div>
       </section>
 
-      <!-- ==================== PAGE 2: EXECUTIVE OVERVIEW ==================== -->
-      <section class="tab-section" id="tab-overview">
-        <div class="section-header">
-          <div>
-            <h2>Executive Command Center</h2>
-            <p>Organization quantum readiness posture, cryptographic risk matrix, and NIST IR 8547 transition milestones.</p>
-          </div>
-          <button class="btn btn-outline btn-sm" onclick="refreshAll()">&#8635; Refresh</button>
-        </div>
-
-        <div class="kpi-grid">
-          <div class="kpi-card kpi-blue">
-            <div class="kpi-label">Readiness Score (Before &rarr; After)</div>
-            <div class="kpi-value" id="kpi-readiness">0%</div>
-            <div class="kpi-sub" id="kpi-net-readiness">Network TLS: 0%</div>
-          </div>
-          <div class="kpi-card kpi-red">
-            <div class="kpi-label">Critical Findings</div>
-            <div class="kpi-value" style="color:var(--red)" id="kpi-critical">0</div>
-            <div class="kpi-sub">Broken or vulnerable classical KEX</div>
-          </div>
-          <div class="kpi-card kpi-red">
-            <div class="kpi-label">HNDL-Urgent Assets</div>
-            <div class="kpi-value" style="color:var(--red)" id="kpi-hndl">0</div>
-            <div class="kpi-sub">Secrecy + Migration &gt; CRQC years</div>
-          </div>
-          <div class="kpi-card kpi-green">
-            <div class="kpi-label">Auto-Fix Network Progress</div>
-            <div class="kpi-value" style="color:var(--green)" id="kpi-migration">0%</div>
-            <div class="kpi-sub" id="kpi-migration-sub">0 / 0 plan items</div>
-          </div>
-          <div class="kpi-card kpi-purple">
-            <div class="kpi-label">PQC Certificates Issued</div>
-            <div class="kpi-value" style="color:var(--purple)" id="kpi-pqc-certs">0</div>
-            <div class="kpi-sub">ML-DSA-87 / ML-DSA-65 / SLH-DSA</div>
-          </div>
-          <div class="kpi-card kpi-blue">
-            <div class="kpi-label">Encrypted Vault Keys</div>
-            <div class="kpi-value" id="kpi-keys-due">0</div>
-            <div class="kpi-sub" id="kpi-keys-sub">AES-256-GCM (.enc) at rest</div>
-          </div>
-        </div>
-
-        <div class="grid-2">
-          <div class="card">
-            <h3>Asset Risk Matrix (Key Exchange · Signature · Symmetric · Protocol)</h3>
-            <div class="table-wrap">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Asset / Endpoint</th>
-                    <th>Key Exchange</th>
-                    <th>Signature / Auth</th>
-                    <th>Symmetric / Hash</th>
-                    <th>Protocol</th>
-                  </tr>
-                </thead>
-                <tbody id="heatmap-tbody">
-                  <tr><td colspan="5">Click "Launch Live Agent" to populate the matrix.</td></tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          <div class="card">
-            <h3>3-Wave Migration Progress &amp; NIST IR 8547 Timeline</h3>
-            <div class="chart-box" style="height:185px; margin-bottom:16px;">
-              <canvas id="chart-overview-waves"></canvas>
-            </div>
-            <div class="timeline" style="font-size:0.8rem;">
-              <div class="tl-item">
-                <div class="tl-dot"></div>
-                <b>Aug 2024 — FIPS 203 (ML-KEM), FIPS 204 (ML-DSA), FIPS 205 (SLH-DSA) Published</b>
-              </div>
-              <div class="tl-item today">
-                <div class="tl-dot"></div>
-                <b style="color:var(--green)">TODAY (<span id="tl-today-date">2026</span>) — Active Hybrid Rollout &amp; CBOM Window</b>
-              </div>
-              <div class="tl-item warn">
-                <div class="tl-dot"></div>
-                <b style="color:var(--purple)">After 2030 — Classical RSA / ECDSA / ECDH Deprecated (NIST IR 8547)</b>
-              </div>
-              <div class="tl-item crit" style="margin-bottom:0;">
-                <div class="tl-dot"></div>
-                <b style="color:var(--red)">After 2035 — Classical Public-Key Algorithms Disallowed</b>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- ==================== PAGE 3: DISCOVERY & MOSCA RISK ==================== -->
+      <!-- ==================== TAB 3: DISCOVERY & MOSCA RISK ==================== -->
       <section class="tab-section" id="tab-discovery">
         <div class="section-header">
           <div>
-            <h2>Cryptographic Discovery, CBOM &amp; Mosca Risk Assessment</h2>
-            <p>Scan live TLS endpoints, source code, and X.509 certificates; evaluate HNDL urgency under NIST IR 8547.</p>
+            <h2>Cryptographic Discovery &amp; Risk Assessment</h2>
+            <p>Inspect endpoints, source code, and certificates; evaluate Harvest-Now-Decrypt-Later risk.</p>
           </div>
           <div style="display:flex; gap:8px; flex-wrap:wrap;">
-            <button class="btn btn-outline btn-sm" onclick="startEnterprise(true)">Start / Reset 5 Services</button>
-            <button class="btn btn-outline btn-sm" onclick="stopEnterprise()">Stop Services</button>
-            <button class="btn btn-blue btn-sm" onclick="triggerScan('before')">&#128269; Scan ("Before")</button>
-            <button class="btn btn-green btn-sm" onclick="triggerScan('after')">&#128269; Scan ("After")</button>
+            <button class="btn btn-outline btn-sm" onclick="startEnterprise(true)">Reset 5 Services</button>
+            <button class="btn btn-blue btn-sm" onclick="triggerScan('before')">Scan Before Upgrade</button>
+            <button class="btn btn-green btn-sm" onclick="triggerScan('after')">Scan After Upgrade</button>
           </div>
         </div>
 
         <div class="sub-nav">
-          <button class="sub-btn active" onclick="switchSubTab('discovery', 'sub-disc-services', this)">Enterprise Services &amp; Assets (<span id="assets-count">0</span>)</button>
-          <button class="sub-btn" onclick="switchSubTab('discovery', 'sub-disc-risk', this)">Mosca Risk Scoring &amp; Findings</button>
-          <button class="sub-btn" onclick="switchSubTab('discovery', 'sub-disc-live', this)">&#127760; Live Internet Scan</button>
+          <button class="sub-btn active" onclick="switchSubTab('discovery', 'sub-disc-services', this)">Services &amp; Inventory (<span id="assets-count">0</span>)</button>
+          <button class="sub-btn" onclick="switchSubTab('discovery', 'sub-disc-risk', this)">Mosca Risk &amp; Findings</button>
+          <button class="sub-btn" onclick="switchSubTab('discovery', 'sub-disc-live', this)">Public Website Scanner</button>
         </div>
 
         <div class="sub-pane active" id="sub-disc-services">
           <div class="card">
-            <h3>Simulated Enterprise TLS Services (openssl s_server)</h3>
+            <h3 style="margin:0 0 10px;">Enterprise TLS Services</h3>
             <div class="table-wrap">
               <table>
                 <thead>
                   <tr>
-                    <th>Service Name</th>
+                    <th>Service</th>
                     <th>Port</th>
                     <th>Exposure</th>
-                    <th>Data Secrecy Shelf-Life</th>
-                    <th>Active TLS / PQC Profile</th>
+                    <th>Secrecy Shelf-Life</th>
+                    <th>Active Profile</th>
                     <th>State</th>
                   </tr>
                 </thead>
@@ -756,16 +722,16 @@
           </div>
 
           <div class="card">
-            <h3>
-              <span>Discovered Cryptographic Inventory</span>
-              <select id="asset-source-filter" style="width:190px;" onchange="loadAssets()">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+              <h3 style="margin:0;">Discovered Cryptographic Inventory</h3>
+              <select id="asset-source-filter" style="width:180px;" onchange="loadAssets()">
                 <option value="all">All Sources</option>
                 <option value="network">Network TLS</option>
                 <option value="code">Source Code</option>
                 <option value="certificate">Certificates</option>
                 <option value="key">Private Keys</option>
               </select>
-            </h3>
+            </div>
             <div class="table-wrap">
               <table>
                 <thead>
@@ -789,9 +755,9 @@
         <div class="sub-pane" id="sub-disc-risk">
           <div class="grid-2">
             <div class="card">
-              <h3>Mosca Shelf-Life Assumptions (X + Y &gt; Z &rArr; HNDL Urgent)</h3>
+              <h3 style="margin:0 0 8px;">Mosca Shelf-Life Model (X + Y &gt; Z)</h3>
               <p style="font-size:0.82rem; color:var(--text-muted); margin-bottom:14px;">
-                Key-exchange assets are flagged <b>HNDL Urgent</b> when <code>data_secrecy_years + migration_years &gt; years_to_crqc</code>.
+                Data is at risk today if <b>Data Secrecy Years (X) + Migration Time (Y) &gt; Years to Quantum Computer (Z)</b>.
               </p>
               <div class="slider-group">
                 <label>
@@ -802,7 +768,7 @@
               </div>
               <div class="slider-group">
                 <label>
-                  <span>Enterprise Migration Duration (Y):</span>
+                  <span>Organization Migration Duration (Y):</span>
                   <b id="lbl-mig" style="color:var(--blue)">3 years</b>
                 </label>
                 <input type="range" id="slider-mig" min="1" max="10" value="3" oninput="document.getElementById('lbl-mig').textContent=this.value+' years'" onchange="updateAssumptions()" />
@@ -810,7 +776,7 @@
             </div>
 
             <div class="card">
-              <h3>Severity Distribution</h3>
+              <h3 style="margin:0 0 8px;">Risk Severity Breakdown</h3>
               <div class="chart-box" style="height:185px;">
                 <canvas id="chart-risk-severity"></canvas>
               </div>
@@ -818,18 +784,18 @@
           </div>
 
           <div class="card">
-            <h3>Vulnerability Findings &amp; NIST IR 8547 Status</h3>
+            <h3 style="margin:0 0 10px;">Vulnerability Findings &amp; NIST Status</h3>
             <div class="table-wrap">
               <table>
                 <thead>
                   <tr>
                     <th>Asset Location</th>
-                    <th>Source / Usage</th>
+                    <th>Usage</th>
                     <th>Algorithm</th>
-                    <th>Score &amp; Severity</th>
+                    <th>Severity</th>
                     <th>HNDL Status</th>
                     <th>NIST IR 8547 Status</th>
-                    <th>Assessment Rationale</th>
+                    <th>Plain-English Explanation</th>
                   </tr>
                 </thead>
                 <tbody id="findings-tbody"></tbody>
@@ -840,23 +806,22 @@
 
         <div class="sub-pane" id="sub-disc-live">
           <div class="card">
-            <h3>
-              <span>Is This Website Quantum-Ready? (Live Internet TLS 1.3 PQC Scanner)</span>
-              <button class="btn btn-outline btn-sm" onclick="runLiveScanAll()">Scan All Suggestions</button>
-            </h3>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+              <h3 style="margin:0;">Public Website Quantum Readiness Scanner</h3>
+              <button class="btn btn-outline btn-sm" onclick="runLiveScanAll()">Scan Sample Websites</button>
+            </div>
             <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
-              <input type="text" id="live-host" placeholder="e.g. cloudflare.com or yourbank.com" style="max-width:360px;" onkeydown="if(event.key==='Enter')runLiveScan()" />
-              <button class="btn btn-purple" id="btn-live-scan" onclick="runLiveScan()">&#127760; Scan Live</button>
+              <input type="text" id="live-host" placeholder="e.g. cloudflare.com or google.com" style="max-width:360px;" onkeydown="if(event.key==='Enter')runLiveScan()" />
+              <button class="btn btn-purple btn-sm" id="btn-live-scan" onclick="runLiveScan()">Scan Website</button>
             </div>
             <div id="live-suggestions" style="margin-top:10px; display:flex; gap:6px; flex-wrap:wrap;"></div>
-            <p style="color:var(--text-muted); font-size:0.78rem; margin-top:8px;">Only public hostnames on port 443 are accepted. Verified against the Mozilla trust store; detects TLS interception proxies.</p>
           </div>
           <div id="live-result" style="margin-bottom:14px;"></div>
           <div class="card">
-            <h3>Scanned Public Websites This Session</h3>
+            <h3 style="margin:0 0 10px;">Scanned Websites This Session</h3>
             <div class="table-wrap">
               <table>
-                <thead><tr><th>Website</th><th>Verdict</th><th>Key Exchange (PQC Client)</th><th>Certificate</th><th>TLS 1.2 Accepted</th><th>Measured (UTC)</th></tr></thead>
+                <thead><tr><th>Website</th><th>Verdict</th><th>Key Exchange</th><th>Certificate</th><th>TLS 1.2 Accepted</th><th>Scanned At</th></tr></thead>
                 <tbody id="live-history"><tr><td colspan="6" style="color:var(--text-muted);">No public websites scanned yet.</td></tr></tbody>
               </table>
             </div>
@@ -864,67 +829,69 @@
         </div>
       </section>
 
-      <!-- ==================== PAGE 4: MIGRATION, PKI & KEY VAULT ==================== -->
+      <!-- ==================== TAB 4: SIMPLIFIED MIGRATION, PKI & KEY VAULT ==================== -->
       <section class="tab-section" id="tab-migration">
         <div class="section-header">
           <div>
-            <h2>Post-Quantum Migration Planner, PKI &amp; Key Vault</h2>
-            <p>Execute 3-wave migration plans, manage Classical/ML-DSA/SLH-DSA CAs, demonstrate dual-cert serving, and inspect AES-256-GCM encrypted keys.</p>
+            <h2>Migration Plan, Certificates &amp; Key Vault</h2>
+            <p>Upgrade vulnerable services in one click, issue quantum-safe certificates, and manage encrypted keys.</p>
           </div>
           <div style="display:flex; gap:8px; flex-wrap:wrap;">
-            <button class="btn btn-outline btn-sm" onclick="buildPlan()">Build Plan</button>
-            <button class="btn btn-green btn-sm" onclick="applyMigrationPlan()">&#9889; Apply Auto-Fixable Network Items</button>
-            <button class="btn btn-purple btn-sm" onclick="runDualCertDemo()">&#9889; Run Dual-Certificate Demo</button>
+            <button class="btn btn-green btn-sm" onclick="applyMigrationPlan()">Upgrade Network Services to PQC</button>
+            <button class="btn btn-purple btn-sm" onclick="runDualCertDemo()">Test Dual-Certificate Handshake</button>
           </div>
         </div>
 
         <div class="sub-nav">
-          <button class="sub-btn active" onclick="switchSubTab('migration', 'sub-mig-plan', this)">1. 3-Wave Plan &amp; Before/After</button>
-          <button class="sub-btn" onclick="switchSubTab('migration', 'sub-mig-pki', this)">2. PKI CAs &amp; Dual-Cert Serving</button>
+          <button class="sub-btn active" onclick="switchSubTab('migration', 'sub-mig-plan', this)">1. Migration Plan &amp; Verification</button>
+          <button class="sub-btn" onclick="switchSubTab('migration', 'sub-mig-pki', this)">2. Certificates &amp; Dual-Cert Serving</button>
           <button class="sub-btn" onclick="switchSubTab('migration', 'sub-mig-vault', this)">3. Encrypted Key Vault &amp; Audit Log</button>
         </div>
 
         <div class="sub-pane active" id="sub-mig-plan">
           <div class="card">
-            <h3>Auto-Applicable Network Migration Progress (<span id="plan-progress-lbl">0%</span>)</h3>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <b style="font-size:0.9rem; color:var(--text-main);">Automated Network Upgrade Progress</b>
+              <span class="badge sev-ok" id="plan-progress-lbl">0%</span>
+            </div>
             <div class="progress-outer">
               <div class="progress-inner" id="plan-progress-bar" style="width:0%"></div>
             </div>
           </div>
 
           <div class="card" id="compare-card">
-            <h3>Before vs. After Migration Verification</h3>
+            <h3 style="margin:0 0 10px;">Before vs. After Upgrade Verification</h3>
             <div class="table-wrap">
               <table>
                 <thead>
                   <tr>
-                    <th>Asset Location</th>
-                    <th>Usage</th>
-                    <th>Before Algorithm</th>
-                    <th>After Algorithm</th>
-                    <th>Severity Change</th>
-                    <th>Score Change</th>
+                    <th>Service</th>
+                    <th>Function</th>
+                    <th>Before Upgrade</th>
+                    <th>After Upgrade</th>
+                    <th>Risk Reduction</th>
+                    <th>Score Improvement</th>
                   </tr>
                 </thead>
                 <tbody id="compare-tbody">
-                  <tr><td colspan="6">Click "Apply Auto-Fixable Network Items" to reconfigure services and verify improvement.</td></tr>
+                  <tr><td colspan="6">Click "Upgrade Network Services to PQC" above to upgrade endpoints and verify improvement.</td></tr>
                 </tbody>
               </table>
             </div>
           </div>
 
           <div class="card">
-            <h3>Prioritized Migration Roadmap (Waves 1, 2 &amp; 3)</h3>
+            <h3 style="margin:0 0 10px;">3-Wave Migration Roadmap</h3>
             <div class="table-wrap">
               <table>
                 <thead>
                   <tr>
-                    <th>Rank / Wave</th>
-                    <th>Location</th>
-                    <th>Current</th>
-                    <th>Recommended Target &amp; Standard</th>
+                    <th>Wave</th>
+                    <th>Service / Asset</th>
+                    <th>Current Encryption</th>
+                    <th>Recommended Quantum-Safe Upgrade</th>
                     <th>Effort</th>
-                    <th>Rationale &amp; Crypto-Agility Guidance</th>
+                    <th>Why This Matters</th>
                     <th>Status</th>
                   </tr>
                 </thead>
@@ -937,64 +904,63 @@
         <div class="sub-pane" id="sub-mig-pki">
           <div class="grid-2">
             <div class="card">
-              <h3>
-                <span>Dual-Certificate Serving Proof (Same Server, Legacy vs. PQC Client)</span>
-                <button class="btn btn-purple btn-sm" onclick="runDualCertDemo()">Run Demo</button>
-              </h3>
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                <h3 style="margin:0;">Dual-Certificate Compatibility Test</h3>
+                <button class="btn btn-purple btn-sm" onclick="runDualCertDemo()">Run Test</button>
+              </div>
               <p style="font-size:0.81rem; color:var(--text-muted); margin-bottom:12px;">
-                Server runs <code>openssl s_server -cert classical.crt -dcert pqc_mldsa65.crt -groups X25519MLKEM768:X25519</code>.
+                Proves that a single server can serve legacy ECDSA to older browsers and quantum-safe ML-DSA-65 to modern clients simultaneously.
               </p>
               <div class="grid-2" id="dual-cert-cards" style="grid-template-columns:1fr 1fr; gap:12px; margin-bottom:0;">
                 <div class="kpi-card kpi-blue">
-                  <div class="kpi-label">Client A: Classical Restricted</div>
-                  <div id="dc-old-body" style="font-size:0.82rem; margin-top:8px; color:var(--text-secondary);">Click "Run Demo"</div>
+                  <div class="kpi-label">Legacy Client</div>
+                  <div id="dc-old-body" style="font-size:0.82rem; margin-top:8px; color:var(--text-secondary);">Click "Run Test"</div>
                 </div>
                 <div class="kpi-card kpi-green">
-                  <div class="kpi-label">Client B: PQC-Capable Default</div>
-                  <div id="dc-new-body" style="font-size:0.82rem; margin-top:8px; color:var(--text-secondary);">Click "Run Demo"</div>
+                  <div class="kpi-label">Quantum-Safe Client</div>
+                  <div id="dc-new-body" style="font-size:0.82rem; margin-top:8px; color:var(--text-secondary);">Click "Run Test"</div>
                 </div>
               </div>
             </div>
 
             <div class="card">
-              <h3>
-                <span>Issue Leaf Certificate &amp; Rotate Services</span>
-                <button class="btn btn-outline btn-sm" onclick="initPKI()">Init Root CAs</button>
-              </h3>
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                <h3 style="margin:0;">Issue New Certificate</h3>
+                <button class="btn btn-outline btn-sm" onclick="initPKI()">Refresh Root CAs</button>
+              </div>
               <div style="display:flex; gap:8px; margin-bottom:12px;">
-                <input type="text" id="pki-issue-name" placeholder="Leaf name" value="billing-svc" />
+                <input type="text" id="pki-issue-name" placeholder="Service name" value="billing-svc" />
                 <select id="pki-issue-alg">
-                  <option value="ML-DSA-65">ML-DSA-65 (PQC Root CA)</option>
-                  <option value="ECDSA-P256">ECDSA-P256 (Classical Root CA)</option>
+                  <option value="ML-DSA-65">ML-DSA-65 (Quantum-Safe CA)</option>
+                  <option value="ECDSA-P256">ECDSA-P256 (Legacy CA)</option>
                 </select>
                 <button class="btn btn-blue btn-sm" onclick="issueCertUI()">Issue</button>
               </div>
-              <div id="cert-size-comparison" style="font-size:0.83rem; color:var(--text-secondary); margin-bottom:10px;"></div>
+              <div id="cert-size-comparison" style="font-size:0.82rem; color:var(--text-secondary); margin-bottom:10px;"></div>
               <div style="display:flex; gap:6px; flex-wrap:wrap;">
                 <button class="btn btn-outline btn-sm" onclick="rotateServiceCert('legacy-web')">Rotate legacy-web</button>
                 <button class="btn btn-outline btn-sm" onclick="rotateServiceCert('customer-api')">Rotate customer-api</button>
                 <button class="btn btn-outline btn-sm" onclick="rotateServiceCert('payments-core')">Rotate payments-core</button>
                 <button class="btn btn-outline btn-sm" onclick="rotateServiceCert('hr-records')">Rotate hr-records</button>
-                <button class="btn btn-outline btn-sm" onclick="rotateServiceCert('pqc-pilot')">Rotate pqc-pilot</button>
               </div>
             </div>
           </div>
 
           <div class="card">
-            <h3>Certificate Inventory &amp; Chain Verification</h3>
+            <h3 style="margin:0 0 10px;">Issued Certificates</h3>
             <div class="table-wrap">
               <table>
                 <thead>
                   <tr>
                     <th>ID</th>
-                    <th>Name</th>
-                    <th>Issuing CA</th>
+                    <th>Certificate Name</th>
+                    <th>Issuing Authority</th>
                     <th>Key Algorithm</th>
-                    <th>Signature Algorithm</th>
-                    <th>DER Size</th>
+                    <th>Signature</th>
+                    <th>Size</th>
                     <th>Valid Until</th>
                     <th>Status</th>
-                    <th>Verify Chain</th>
+                    <th>Verify</th>
                   </tr>
                 </thead>
                 <tbody id="pki-certs-tbody"></tbody>
@@ -1006,12 +972,12 @@
         <div class="sub-pane" id="sub-mig-vault">
           <div class="card" style="border-left: 4px solid var(--purple);">
             <div id="vault-notice" style="font-size:0.84rem; font-weight:600; color:var(--text-secondary);">
-              All private keys live on disk exclusively as AES-256-GCM ciphertext (<code>.key.enc</code>, chmod 600). Plaintext keys are materialized only for active OpenSSL operations and immediately wiped.
+              All private keys are encrypted at rest using AES-256-GCM. Plaintext keys never remain on disk.
             </div>
           </div>
 
           <div class="card">
-            <h3>Encrypted Key Inventory</h3>
+            <h3 style="margin:0 0 10px;">Encrypted Key Vault</h3>
             <div class="table-wrap">
               <table>
                 <thead>
@@ -1019,10 +985,10 @@
                     <th>ID</th>
                     <th>Key Name</th>
                     <th>Algorithm</th>
-                    <th>Purpose</th>
-                    <th>Created At</th>
+                    <th>Service</th>
+                    <th>Created</th>
                     <th>Rotate By</th>
-                    <th>At-Rest Encryption</th>
+                    <th>Protection</th>
                     <th>Status</th>
                     <th>Action</th>
                   </tr>
@@ -1033,17 +999,17 @@
           </div>
 
           <div class="card">
-            <h3>Immutable Cryptographic Audit Log</h3>
+            <h3 style="margin:0 0 10px;">Security Audit Trail</h3>
             <div class="table-wrap">
               <table>
                 <thead>
                   <tr>
                     <th>ID</th>
-                    <th>Timestamp (UTC)</th>
+                    <th>Time (UTC)</th>
                     <th>Actor</th>
                     <th>Action</th>
                     <th>Target</th>
-                    <th>Detail</th>
+                    <th>Summary</th>
                   </tr>
                 </thead>
                 <tbody id="audit-tbody"></tbody>
@@ -1053,142 +1019,120 @@
         </div>
       </section>
 
-      <!-- ==================== PAGE 5: CRYPTO LAB & BENCHMARKS ==================== -->
+      <!-- ==================== TAB 5: HUMAN-FRIENDLY CRYPTO LAB & SPEED ==================== -->
       <section class="tab-section" id="tab-hybrid">
         <div class="section-header">
           <div>
-            <h2>Hybrid Encryption Lab, TLS Policy Tests &amp; Empirical Benchmarks</h2>
-            <p>Interactive X25519 + ML-KEM-768 combiner, live TLS 1.3 policy probes, and fair in-process <code>openssl speed</code> benchmarks.</p>
+            <h2>Interactive Quantum Protection Lab &amp; Speed Comparison</h2>
+            <p>See how hybrid encryption protects confidential data in plain English, and compare algorithm speeds.</p>
           </div>
         </div>
 
         <div class="sub-nav">
-          <button class="sub-btn active" onclick="switchSubTab('hybrid', 'sub-lab-combiner', this)">1. Hybrid KEM Combiner &amp; TLS Policy Tests</button>
-          <button class="sub-btn" onclick="switchSubTab('hybrid', 'sub-lab-bench', this)">2. Performance &amp; Size Benchmarks</button>
+          <button class="sub-btn active" onclick="switchSubTab('hybrid', 'sub-lab-combiner', this)">1. Interactive Quantum Protection Simulator</button>
+          <button class="sub-btn" onclick="switchSubTab('hybrid', 'sub-lab-bench', this)">2. Algorithm Speed &amp; Size Comparison</button>
         </div>
 
         <div class="sub-pane active" id="sub-lab-combiner">
           <div class="grid-2">
+            <!-- Card 1: Clean Plain-English Hybrid Simulator -->
             <div class="card">
-              <h3>Application-Level Hybrid KEM Demo (X25519 + ML-KEM-768 &rarr; HKDF &rarr; AES-256-GCM)</h3>
+              <h3 style="margin:0 0 8px;">1. Test Hybrid Quantum-Safe Encryption</h3>
+              <p style="font-size:0.82rem; color:var(--text-secondary); margin-bottom:12px;">
+                Combine classical encryption (X25519) with NIST Post-Quantum encryption (ML-KEM-768) to protect sensitive messages.
+              </p>
               <div style="margin-bottom:10px;">
-                <label style="font-size:0.8rem; color:var(--text-muted); font-weight:600;">Plaintext Payload:</label>
-                <input type="text" id="hybrid-msg" value="SWIFT Wire #9941: Transfer $25,000,000 — Protect against Harvest-Now-Decrypt-Later" style="margin-top:4px;" />
+                <label style="font-size:0.78rem; color:var(--text-muted); font-weight:700;">Confidential Message to Protect:</label>
+                <input type="text" id="hybrid-msg" value="Wire Transfer #9941: $25,000,000 — Confidential Financial Record" style="margin-top:4px;" />
               </div>
               <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-bottom:14px;">
-                <select id="hybrid-mode" style="width:240px;">
-                  <option value="hybrid">Hybrid Mode (X25519 + ML-KEM-768)</option>
-                  <option value="classical">Classical-Only Mode (X25519 Alone)</option>
+                <select id="hybrid-mode" style="width:250px;" onchange="runHybridLab()">
+                  <option value="hybrid">Quantum-Safe Hybrid (X25519 + ML-KEM-768)</option>
+                  <option value="classical">Legacy Classical Only (X25519 Alone)</option>
                 </select>
                 <label style="font-size:0.8rem; color:var(--text-secondary); display:flex; align-items:center; gap:5px; cursor:pointer;">
-                  <input type="checkbox" id="hybrid-tamper" /> Tamper ciphertext (test GCM auth)
+                  <input type="checkbox" id="hybrid-tamper" onchange="runHybridLab()" /> Simulate network tampering
                 </label>
-                <button class="btn btn-purple btn-sm" onclick="runHybridLab()">&#128274; Encrypt &amp; Verify</button>
+                <button class="btn btn-purple btn-sm" onclick="runHybridLab()">Test Protection</button>
               </div>
               <div id="hybrid-summary-box"></div>
-              <div id="hybrid-steps-list" style="margin-top:12px;"></div>
+              <div id="hybrid-steps-list" style="margin-top:10px;"></div>
             </div>
 
+            <!-- Card 2: Plain-English Q-Day Attack Simulator -->
             <div class="card">
-              <h3>
-                <span>TLS 1.3 Policy Verification (Fallback · Strict PQC · Hybrid)</span>
-                <button class="btn btn-blue btn-sm" onclick="runPolicyTestsUI()">&#9654; Run 3 Policy Tests</button>
-              </h3>
-              <div id="policy-tests-container">
-                <p style="color:var(--text-muted); font-size:0.83rem;">Click "Run 3 Policy Tests" to verify Classical Fallback, Strict PQC-Only Rejection, and Hybrid Negotiation.</p>
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                <h3 style="margin:0;">2. "Harvest Now, Decrypt Later" (Q-Day) Test</h3>
+                <button class="btn btn-purple btn-sm" onclick="runQDay()">Simulate Q-Day Attack</button>
               </div>
+              <p style="color:var(--text-secondary); font-size:0.82rem; margin-bottom:10px;">
+                What happens if an attacker records your encrypted traffic today and uses a future Quantum Computer to break it?
+              </p>
+              <input type="text" id="qday-msg" value="Patient record #4471: medical history confidential until 2051" style="margin-bottom:12px;" />
+              <div id="qday-result"></div>
 
-              <h3 style="margin-top:18px;">Why Hybrid Combiners Defeat "Harvest Now, Decrypt Later"</h3>
-              <div id="hndl-explanation-box" style="font-size:0.83rem; color:var(--text-secondary); background:#f8fafc; border:1px solid var(--glass-outline); padding:12px; border-radius:12px;">
-                Run the Hybrid KEM demo on the left to inspect transcript overhead and SHA-256 shared-secret fingerprints.
+              <div style="margin-top:16px; border-top:1px solid #e2e8f0; padding-top:12px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                  <b style="font-size:0.86rem;">3. Server Connection Policy Check</b>
+                  <button class="btn btn-blue btn-sm" onclick="runPolicyTestsUI()">Verify 3 Connection Rules</button>
+                </div>
+                <div id="policy-tests-container">
+                  <p style="color:var(--text-muted); font-size:0.8rem; margin:0;">Click "Verify 3 Connection Rules" to confirm legacy compatibility and quantum-safe enforcement.</p>
+                </div>
+                <div id="hndl-explanation-box" style="display:none;"></div>
               </div>
             </div>
-          </div>
-
-          <div class="card">
-            <h3>
-              <span>&#9200; Q-Day Replay: Harvest Now, Decrypt Later Simulation</span>
-              <button class="btn btn-purple btn-sm" onclick="runQDay()">&#9654; Record Today, Attack at Q-Day</button>
-            </h3>
-            <p style="color:var(--text-muted); font-size:0.8rem; margin-bottom:8px;">An eavesdropper records both a classical X25519 session and a hybrid X25519 + ML-KEM-768 session today. At Q-Day, a quantum computer recovers the X25519 secret key via Shor&rsquo;s algorithm. Which recording can it read?</p>
-            <input type="text" id="qday-msg" value="Patient record #4471: diagnosis confidential until 2051" style="margin-bottom:10px;" />
-            <div id="qday-result"></div>
           </div>
         </div>
 
         <div class="sub-pane" id="sub-lab-bench">
           <div class="card">
-            <h3>
-              <span>Computed Key Takeaways &amp; Host Specifications</span>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <h3 style="margin:0;">Key Performance Takeaways</h3>
               <div style="display:flex; gap:8px; align-items:center;">
-                <input type="text" id="bench-n" value="30" style="width:70px;" title="Iterations" />
-                <button class="btn btn-purple btn-sm" id="btn-run-bench" onclick="triggerBenchmarks()">&#9201; Run Live Benchmarks</button>
-                <a class="btn btn-outline btn-sm" id="btn-bench-csv" href="#" target="_blank">&#11015; CSV</a>
+                <input type="hidden" id="bench-n" value="30" />
+                <button class="btn btn-purple btn-sm" id="btn-run-bench" onclick="triggerBenchmarks()">Measure Live Speed</button>
+                <a class="btn btn-outline btn-sm" id="btn-bench-csv" href="#" target="_blank">Download CSV</a>
               </div>
-            </h3>
+            </div>
             <div id="bench-machine-info" style="font-size:0.8rem; color:var(--text-muted); margin-bottom:8px;"></div>
-            <ul id="bench-takeaways" style="padding-left:20px; font-size:0.84rem; color:var(--text-secondary);"></ul>
+            <ul id="bench-takeaways" style="padding-left:20px; font-size:0.84rem; color:var(--text-secondary); margin:0;"></ul>
           </div>
 
           <div class="grid-2">
             <div class="card">
-              <h3>Primary Fair Latency: In-Process <code>openssl speed</code> (ms/op — Log Scale)</h3>
+              <h3 style="margin:0 0 10px;">Operation Time Comparison (Lower is Faster)</h3>
               <div class="chart-box">
                 <canvas id="chart-bench-latency"></canvas>
               </div>
             </div>
             <div class="card">
-              <h3>Exact Public Key vs. Ciphertext / Signature Size (Bytes — Log Scale)</h3>
+              <h3 style="margin:0 0 10px;">Key &amp; Signature Size Comparison (Bytes)</h3>
               <div class="chart-box">
                 <canvas id="chart-bench-sizes"></canvas>
               </div>
             </div>
           </div>
 
-          <div class="grid-2">
-            <div class="card">
-              <h3>Primary Table: In-Process <code>openssl speed</code> (Same C Engine)</h3>
-              <div class="table-wrap">
-                <table>
-                  <thead>
-                    <tr>
-                      <th>Algorithm &amp; Operation</th>
-                      <th>Category</th>
-                      <th>Throughput</th>
-                      <th>Latency</th>
-                      <th>p95</th>
-                      <th>CPU</th>
-                      <th>PubKey</th>
-                      <th>CT / Sig</th>
-                      <th>Method</th>
-                    </tr>
-                  </thead>
-                  <tbody id="bench-tbody"></tbody>
-                </table>
-              </div>
+          <div class="card">
+            <h3 style="margin:0 0 10px;">Simplified Algorithm Speed &amp; Size Summary</h3>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Algorithm &amp; Operation</th>
+                    <th>Category</th>
+                    <th>Operations / Sec</th>
+                    <th>Time per Operation</th>
+                    <th>Public Key Size</th>
+                    <th>Ciphertext / Signature Size</th>
+                    <th>Summary</th>
+                  </tr>
+                </thead>
+                <tbody id="bench-tbody"></tbody>
+              </table>
             </div>
-
-            <div class="card">
-              <h3>Secondary Table: End-to-End TLS 1.3 &amp; Python <code>cryptography</code></h3>
-              <div class="table-wrap">
-                <table>
-                  <thead>
-                    <tr>
-                      <th>Operation / Profile</th>
-                      <th>Category</th>
-                      <th>N</th>
-                      <th>Median</th>
-                      <th>p95</th>
-                      <th>CPU</th>
-                      <th>PubKey</th>
-                      <th>Wire</th>
-                      <th>Notes</th>
-                    </tr>
-                  </thead>
-                  <tbody id="bench-secondary-tbody"></tbody>
-                </table>
-              </div>
-            </div>
+            <div style="display:none;"><tbody id="bench-secondary-tbody"></tbody></div>
           </div>
         </div>
       </section>
@@ -1196,6 +1140,6 @@
   </div>
 
   <div id="toast-container"></div>
-  <script src="/static/app.js?v=12"></script>
+  <script src="/static/app.js?v=14"></script>
 </body>
 </html>

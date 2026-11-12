@@ -459,50 +459,61 @@ def render_target_report_html(scan_data: Dict[str, Any], user: Dict[str, Any]) -
 <head>
   <meta charset="utf-8" />
   <title>Quantum Guard Report — {host}</title>
+  <link rel="icon" type="image/svg+xml" href="/static/logo.svg" />
   <style>
-    body {{ font-family: 'Segoe UI', Arial, sans-serif; background: #f8fafc; color: #0f172a; margin: 32px; line-height: 1.55; }}
-    .report-box {{ max-width: 920px; margin: 0 auto; background: #ffffff; border: 1.5px solid #e2e8f0; border-radius: 18px; padding: 32px; box-shadow: 0 12px 32px rgba(15,23,42,0.06); }}
-    .header {{ display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #e2e8f0; padding-bottom: 18px; margin-bottom: 22px; }}
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+    body {{ font-family: 'Plus Jakarta Sans', 'Segoe UI', Arial, sans-serif; background: linear-gradient(135deg, #f8fafc 0%, #f3e8ff 50%, #eff6ff 100%); color: #0f172a; margin: 0; padding: 32px 20px; line-height: 1.55; }}
+    .report-box {{ max-width: 920px; margin: 0 auto; background: #ffffff; border: 1.5px solid #e2e8f0; border-radius: 22px; padding: 34px 38px; box-shadow: 0 20px 45px rgba(15,23,42,0.08); }}
+    .header {{ display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #f1f5f9; padding-bottom: 18px; margin-bottom: 22px; }}
     .badge {{ display: inline-block; padding: 6px 14px; border-radius: 999px; border: 2px solid {badge_color}; color: {badge_color}; font-weight: 800; font-size: 13px; }}
+    .summary-box {{ background: linear-gradient(135deg, rgba(124,58,237,0.06), rgba(37,99,235,0.06)); border: 1.5px solid rgba(124,58,237,0.22); border-radius: 14px; padding: 14px 18px; margin-bottom: 20px; font-size: 13.5px; }}
     .kpi-row {{ display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin: 18px 0; }}
-    .kpi {{ border: 1.5px solid #cbd5e1; border-radius: 12px; padding: 12px; background: #ffffff; }}
-    .kpi-lbl {{ font-size: 11px; text-transform: uppercase; color: #64748b; font-weight: 700; }}
+    .kpi {{ border: 1.5px solid #e2e8f0; border-radius: 14px; padding: 14px; background: #f8fafc; }}
+    .kpi-lbl {{ font-size: 11px; text-transform: uppercase; color: #64748b; font-weight: 700; letter-spacing: 0.04em; }}
     .kpi-val {{ font-size: 20px; font-weight: 800; margin-top: 4px; color: #0f172a; }}
-    table {{ width: 100%; border-collapse: collapse; margin-top: 14px; font-size: 13px; }}
+    table {{ width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 13px; }}
     th, td {{ border: 1px solid #e2e8f0; padding: 10px 12px; text-align: left; vertical-align: top; }}
-    th {{ background: #f1f5f9; color: #334155; font-size: 11px; text-transform: uppercase; }}
+    th {{ background: #f8fafc; color: #475569; font-size: 11px; text-transform: uppercase; font-weight: 800; }}
     code {{ background: #f1f5f9; color: #7c3aed; padding: 2px 6px; border-radius: 4px; font-family: monospace; }}
-    @media print {{ .no-print {{ display: none; }} body {{ margin: 0; background: #fff; }} }}
+    @media print {{ .no-print {{ display: none; }} body {{ padding: 0; background: #fff; }} .report-box {{ box-shadow: none; border: none; }} }}
   </style>
 </head>
 <body>
   <div class="report-box">
     <div class="no-print" style="text-align:right; margin-bottom:12px;">
-      <button onclick="window.print()" style="background:#fff;border:1.5px solid #2563eb;color:#2563eb;padding:8px 16px;border-radius:8px;font-weight:700;cursor:pointer;">Print / Save as PDF</button>
+      <button onclick="window.print()" style="background:linear-gradient(135deg,#7c3aed,#2563eb);border:none;color:#fff;padding:8px 18px;border-radius:10px;font-weight:700;cursor:pointer;">Print / Save as PDF</button>
     </div>
     <div class="header">
-      <div>
-        <div style="font-size:12px;font-weight:800;color:#7c3aed;text-transform:uppercase;">Quantum Guard SaaS · quantumguard-lab.veerbhanushali.in</div>
-        <h1 style="margin:4px 0;font-size:24px;">Post-Quantum Readiness Report: {host}</h1>
-        <div style="font-size:13px;color:#64748b;">Prepared for <b>{html.escape(user.get('full_name', user['email']))}</b> ({html.escape(user.get('role_label', 'CISO'))} · {html.escape(user.get('organization', 'Enterprise'))})</div>
+      <div style="display:flex;align-items:center;gap:14px;">
+        <img src="/static/logo.svg" alt="QG" style="width:46px;height:46px;border-radius:12px;" />
+        <div>
+          <div style="font-size:11px;font-weight:800;color:#7c3aed;text-transform:uppercase;letter-spacing:0.08em;">Quantum Guard · Post-Quantum Readiness Assessment</div>
+          <h1 style="margin:3px 0;font-size:23px;">Domain Security Report: {host}</h1>
+          <div style="font-size:12px;color:#64748b;">Prepared for <b>{html.escape(user.get('full_name', user['email']))}</b> ({html.escape(user.get('role_label', 'CISO'))} · {html.escape(user.get('organization', 'Enterprise'))})</div>
+        </div>
       </div>
       <div class="badge">{verdict}</div>
     </div>
 
+    <div class="summary-box">
+      <b style="color:#7c3aed;text-transform:uppercase;font-size:11px;letter-spacing:0.06em;">Plain-English Summary</b><br/>
+      Target <b>{host}</b> achieved a Quantum Readiness score of <b>{readiness}%</b> using key exchange group <code>{kex}</code> and certificate signature <code>{cert_alg}</code>.
+    </div>
+
     <div class="kpi-row">
       <div class="kpi"><div class="kpi-lbl">Quantum Readiness</div><div class="kpi-val" style="color:{badge_color};">{readiness}%</div></div>
-      <div class="kpi"><div class="kpi-lbl">Negotiated KEM Group</div><div class="kpi-val" style="font-size:15px;">{kex}</div></div>
-      <div class="kpi"><div class="kpi-lbl">Leaf Certificate Sig</div><div class="kpi-val" style="font-size:15px;">{cert_alg}</div></div>
+      <div class="kpi"><div class="kpi-lbl">Key Exchange (KEM)</div><div class="kpi-val" style="font-size:15px;">{kex}</div></div>
+      <div class="kpi"><div class="kpi-lbl">Certificate Signature</div><div class="kpi-val" style="font-size:15px;">{cert_alg}</div></div>
       <div class="kpi"><div class="kpi-lbl">TLS 1.2 Fallback</div><div class="kpi-val" style="font-size:14px;">{tls12}</div></div>
     </div>
 
-    <h3>1. Executive Risk &amp; Harvest-Now-Decrypt-Later (HNDL) Findings</h3>
-    <ul>{reasons_html}</ul>
-    <p style="font-size:12px;color:#64748b;">Certificate Issuer: {issuer} · Standards Reference: NIST FIPS 203 (ML-KEM), FIPS 204 (ML-DSA), FIPS 205 (SLH-DSA), NIST IR 8547 (2030 Deprecation / 2035 Disallowance).</p>
+    <h3 style="margin-bottom:6px;">1. Key Security Findings &amp; Harvest-Now-Decrypt-Later (HNDL) Assessment</h3>
+    <ul style="margin-top:4px;">{reasons_html}</ul>
+    <p style="font-size:12px;color:#64748b;">Certificate Issuer: {issuer} · Standards Reference: NIST FIPS 203 (ML-KEM), FIPS 204 (ML-DSA), FIPS 205 (SLH-DSA), NIST IR 8547.</p>
 
-    <h3>2. Prioritized 3-Wave Post-Quantum Remediation Plan</h3>
+    <h3 style="margin-bottom:6px;">2. Recommended 3-Wave Upgrade Roadmap</h3>
     <table>
-      <thead><tr><th>Migration Wave</th><th>Current Detected</th><th>Recommended NIST PQC Target &amp; Config</th><th>Status</th></tr></thead>
+      <thead><tr><th>Migration Wave</th><th>Current Configuration</th><th>Recommended NIST Quantum-Safe Upgrade</th><th>Status</th></tr></thead>
       <tbody>{waves_html}</tbody>
     </table>
   </div>
