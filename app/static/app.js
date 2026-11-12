@@ -815,6 +815,7 @@ async function runGuidedDemo() {
 
     setStep("7/8 Running Hybrid X25519 + ML-KEM-768 Encryption Combiner...", 92);
     await runHybridLab();
+    await runQDay();
 
     setStep("8/8 Checking Empirical Benchmarks & Finalizing Executive Overview...", 98);
     let b = await apiFetch("/api/benchmarks/latest");
@@ -865,3 +866,121 @@ window.addEventListener("DOMContentLoaded", async () => {
   await refreshAll();
   await runHybridLab();
 });
+
+
+// ---------- Live Internet Scan ----------
+const liveHistory = [];
+
+async function loadLiveSuggestions() {
+  const box = document.getElementById("live-suggestions");
+  if (!box) return;
+  try {
+    const res = await fetch("/api/live-scan/suggestions").then((r) => r.json());
+    box.innerHTML = res.hosts
+      .map((h) => `<button class="btn btn-outline btn-sm" onclick="document.getElementById('live-host').value='${h}';runLiveScan()">${h}</button>`)
+      .join("");
+  } catch (e) {}
+}
+
+async function liveScanHost(host) {
+  const raw = await fetch("/api/live-scan", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ host }),
+  });
+  const res = await raw.json();
+  if (!raw.ok || res.error === true) throw new Error(res.message || `HTTP ${raw.status}`);
+  return res;
+}
+
+function renderLiveResult(r) {
+  const ready = r.kex_status === "hybrid";
+  const unknown = r.score === null || r.score === undefined;
+  const color = unknown ? "var(--medium)" : ready ? "var(--ok)" : "var(--critical)";
+  const badge = unknown ? "sev-medium" : ready ? "sev-ok" : "sev-critical";
+  document.getElementById("live-result").innerHTML = `
+    <div class="card" style="border-left:6px solid ${color};">
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+        <h3 style="margin:0;">${escapeHtml(r.host)}</h3>
+        <span class="badge ${badge}" style="font-size:0.95rem;">${escapeHtml(r.verdict)}${unknown ? "" : ` · risk ${r.score}`}</span>
+      </div>
+      ${r.warning ? `<p style="color:#fbbf24; margin-top:10px;">&#9888;&#65039; ${escapeHtml(r.warning)}</p>` : ""}
+      <ul style="margin-top:10px; font-size:0.9rem;">${(r.reasons || []).map((x) => `<li>${escapeHtml(x)}</li>`).join("")}</ul>
+      <div class="table-wrap" style="margin-top:10px;"><table>
+        <tr><th>Probe</th><th>Offered</th><th>Negotiated</th><th>Handshake</th></tr>
+        <tr><td>Post-quantum client</td><td>${r.pqc_probe.offered}</td><td><b>${escapeHtml(r.pqc_probe.negotiated_group)}</b> (${escapeHtml(r.pqc_probe.protocol)})</td><td>${r.pqc_probe.handshake_ms} ms</td></tr>
+        <tr><td>Classical client</td><td>${r.classical_probe.offered}</td><td>${escapeHtml(r.classical_probe.negotiated_group)}</td><td>${r.classical_probe.handshake_ms} ms</td></tr>
+      </table></div>
+      <p style="font-size:0.8rem; color:var(--text-muted); margin-top:8px;">Certificate: ${escapeHtml(r.certificate.signature_algorithm)} (peer signature ${escapeHtml(r.certificate.peer_signature_type)}) · issuer ${escapeHtml(r.certificate.issuer)} · trust check: ${r.certificate.verified ? "verified" : escapeHtml(r.certificate.verify_message)} · TLS 1.2 accepted: ${r.tls12_accepted ? "yes" : "no"} · ${r.measured_at}</p>
+    </div>`;
+}
+
+function renderLiveHistory() {
+  document.getElementById("live-history").innerHTML = liveHistory
+    .map(
+      (r) => `<tr><td><b>${escapeHtml(r.host)}</b></td><td>${escapeHtml(r.verdict)}</td><td>${escapeHtml(r.pqc_probe.negotiated_group)}</td><td>${escapeHtml(r.certificate.signature_algorithm)}</td><td>${r.tls12_accepted ? "yes" : "no"}</td><td>${r.measured_at}</td></tr>`
+    )
+    .join("");
+}
+
+async function runLiveScan() {
+  const host = document.getElementById("live-host").value.trim();
+  if (!host) return showToast("Type a website first, e.g. example.com", true);
+  const btn = document.getElementById("btn-live-scan");
+  btn.disabled = true;
+  btn.textContent = "Scanning...";
+  try {
+    const r = await liveScanHost(host);
+    renderLiveResult(r);
+    liveHistory.unshift(r);
+    renderLiveHistory();
+  } catch (e) {
+    showToast(`Live scan: ${e.message}`, true);
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = "&#127760; Scan Live";
+  }
+}
+
+async function runLiveScanAll() {
+  const res = await fetch("/api/live-scan/suggestions").then((r) => r.json());
+  for (const h of res.hosts) {
+    try {
+      const r = await liveScanHost(h);
+      liveHistory.unshift(r);
+      renderLiveHistory();
+    } catch (e) {
+      showToast(`${h}: ${e.message}`, true);
+    }
+  }
+  const total = liveHistory.length;
+  const ready = liveHistory.filter((r) => r.kex_status === "hybrid").length;
+  showToast(`${ready} of ${total} scanned sites negotiate post-quantum key exchange.`);
+}
+
+// ---------- Q-Day replay ----------
+async function runQDay() {
+  const message = document.getElementById("qday-msg").value;
+  const raw = await fetch("/api/lab/qday", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ message }),
+  });
+  const res = await raw.json();
+  if (!raw.ok || res.error === true) return showToast(`Q-Day: ${res.message || raw.status}`, true);
+  const card = (title, s) => `
+    <div class="kpi-card" style="flex:1; border-color:${s.attacker_decrypted ? "var(--critical)" : "var(--ok)"};">
+      <div class="kpi-label">${title} · ${s.recorded_bytes} bytes recorded</div>
+      <div style="font-size:1.1rem; font-weight:700; margin:6px 0; color:${s.attacker_decrypted ? "#fca5a5" : "#86efac"};">
+        ${s.attacker_decrypted ? "&#128275; ATTACKER READS IT" : "&#128274; ATTACKER FAILS"}
+      </div>
+      <div style="font-size:0.85rem;">${s.attacker_decrypted ? `Recovered: <code>${escapeHtml(s.attacker_plaintext)}</code>` : `AES-GCM rejected the attacker's key (${escapeHtml(s.attacker_error || "")}).`}</div>
+      <div style="font-size:0.75rem; color:var(--text-muted); margin-top:6px;">Real key fp <code>${s.true_key_fp}</code> · attacker key fp <code>${s.attacker_key_fp}</code> · ciphertext <code>${s.ciphertext_preview_hex}…</code></div>
+    </div>`;
+  document.getElementById("qday-result").innerHTML = `
+    <ol style="font-size:0.85rem; margin:8px 0 12px 18px;">${res.steps.map((x) => `<li>${escapeHtml(x)}</li>`).join("")}</ol>
+    <div style="display:flex; gap:12px; flex-wrap:wrap;">${card("Classical X25519 session", res.sessions.classical)}${card("Hybrid X25519 + ML-KEM-768 session", res.sessions.hybrid)}</div>
+    <p style="font-size:0.75rem; color:var(--text-muted); margin-top:8px;">${escapeHtml(res.simulation_note)}</p>`;
+}
+
+window.addEventListener("DOMContentLoaded", loadLiveSuggestions);

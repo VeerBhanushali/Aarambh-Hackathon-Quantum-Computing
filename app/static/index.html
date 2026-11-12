@@ -21,6 +21,7 @@
     <nav class="nav-tabs" id="main-nav">
       <button class="nav-btn active" data-tab="overview">Overview</button>
       <button class="nav-btn" data-tab="discovery">Discovery &amp; CBOM</button>
+      <button class="nav-btn" data-tab="live">Live Internet Scan</button>
       <button class="nav-btn" data-tab="risk">Risk &amp; Mosca</button>
       <button class="nav-btn" data-tab="migration">Migration Planner</button>
       <button class="nav-btn" data-tab="pki">PKI &amp; Dual-Cert</button>
@@ -448,6 +449,16 @@
           </div>
         </div>
       </div>
+      <div class="card" style="margin-top:16px;">
+        <h3>
+          <span>&#9200; Q-Day Replay: Harvest Now, Decrypt Later</span>
+          <button class="btn btn-accent btn-sm" onclick="runQDay()">&#9654; Record today, attack at Q-Day</button>
+        </h3>
+        <p style="color:var(--text-muted); font-size:0.85rem;">An eavesdropper records a classical and a hybrid session today. At Q-Day (simulated) a quantum computer recovers the X25519 secret key with Shor&rsquo;s algorithm. Which recording can it read?</p>
+        <input type="text" id="qday-msg" value="Patient record #4471: diagnosis confidential until 2051" style="margin:8px 0;" />
+        <div id="qday-result"></div>
+      </div>
+
     </section>
 
     <!-- ==================== 7. BENCHMARKS SECTION ==================== -->
@@ -583,6 +594,35 @@
               </tr>
             </thead>
             <tbody id="audit-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== LIVE INTERNET SCAN ==================== -->
+    <section class="tab-section" id="tab-live">
+      <div class="section-header">
+        <div>
+          <h2>Is This Website Quantum-Ready? (Live Internet Scan)</h2>
+          <p>Type any public website. We perform real TLS 1.3 handshakes to it right now and check for post-quantum hybrid key exchange (X25519MLKEM768).</p>
+        </div>
+      </div>
+      <div class="card">
+        <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+          <input type="text" id="live-host" placeholder="e.g. yourbank.com" style="max-width:360px;" onkeydown="if(event.key==='Enter')runLiveScan()" />
+          <button class="btn btn-accent" id="btn-live-scan" onclick="runLiveScan()">&#127760; Scan Live</button>
+          <button class="btn btn-outline btn-sm" onclick="runLiveScanAll()">Scan all suggestions</button>
+        </div>
+        <div id="live-suggestions" style="margin-top:10px; display:flex; gap:6px; flex-wrap:wrap;"></div>
+        <p style="color:var(--text-muted); font-size:0.8rem; margin-top:10px;">Only public hostnames on port 443 are accepted. Results are verified against the public Mozilla trust store; if a proxy intercepts TLS, we say so instead of showing wrong results.</p>
+      </div>
+      <div id="live-result" style="margin-top:14px;"></div>
+      <div class="card" style="margin-top:14px;">
+        <h3>Scanned this session</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Website</th><th>Verdict</th><th>Key exchange (PQC client)</th><th>Certificate</th><th>TLS 1.2 accepted</th><th>Measured (UTC)</th></tr></thead>
+            <tbody id="live-history"><tr><td colspan="6" style="color:var(--text-muted);">No scans yet.</td></tr></tbody>
           </table>
         </div>
       </div>

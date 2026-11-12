@@ -107,6 +107,21 @@ Before each rehearsal: **Reset Demo**. Keep a terminal with the server open in c
 
 - [ ] Rehearsal 1  - [ ] Rehearsal 2  - [ ] Rehearsal 3
 
+### Task 5b — Check the two stand-out features on the venue network (20 min)
+Only 4 teams have PS07 (Vicious, OREO, Vera, CYBERNOVA); these two features are what the others won't have.
+
+1. **Live Internet Scan** tab: scan `cloudflare.com`. On a normal network it should say **Quantum-ready key exchange**
+   (X25519MLKEM768). If it says **"Cannot tell — TLS is being intercepted"**, the venue/college Wi-Fi inspects TLS:
+   switch the laptop to a **phone hotspot** for this part of the demo.
+2. Click **Scan all suggestions** the day before and screenshot the table. That gives a backup slide
+   ("X of 8 popular sites are quantum-ready") with the date.
+3. **Hybrid Lab → Q-Day Replay**: click it. The classical card must say "ATTACKER READS IT", the hybrid card "ATTACKER FAILS".
+
+Demo lines: for the live scan, ask a judge for their bank's website and type it in.
+For Q-Day, say: "Same message, same eavesdropper. Only the classical recording can be read after Q-Day."
+
+- [ ] Task 5b done (venue network intercepted? yes / no)
+
 ### Task 6 — Confirm submission rules with the organisers (10 min)
 Format, deadline, repo visibility, video length — none were in the problem statement PDF.
 

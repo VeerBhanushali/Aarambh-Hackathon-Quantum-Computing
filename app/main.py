@@ -16,7 +16,8 @@ from pydantic import BaseModel
 from app.benchmark import export_benchmarks_csv, get_latest_benchmarks, run_benchmarks
 from app.capabilities import detect_capabilities
 from app.config import ALGORITHM_REGISTRY, PKI_DIR
-from app.crypto_lab.hybrid import run_hybrid_demo
+from app.crypto_lab.hybrid import run_hybrid_demo, run_qday_replay
+from app.discovery.live import SUGGESTED_HOSTS, scan_public_host
 from app.crypto_lab.policy import run_policy_tests
 from app.db import (
     get_assumptions,
@@ -100,6 +101,14 @@ class HybridLabRequest(BaseModel):
     message: str = "Confidential Swift Wire: $25,000,000 — Protect against Harvest-Now-Decrypt-Later"
     mode: str = "hybrid"
     tamper: bool = False
+
+
+class QDayRequest(BaseModel):
+    message: str = "Patient record #4471: diagnosis confidential until 2051"
+
+
+class LiveScanRequest(BaseModel):
+    host: str
 
 
 class BenchmarkRequest(BaseModel):
@@ -285,6 +294,24 @@ def api_pki_dual_cert_demo() -> Dict[str, Any]:
 @app.post("/api/lab/hybrid")
 def api_lab_hybrid(req: HybridLabRequest) -> Dict[str, Any]:
     return run_hybrid_demo(req.message, mode=req.mode, tamper=req.tamper)
+
+
+@app.post("/api/lab/qday")
+def api_lab_qday(req: QDayRequest) -> Dict[str, Any]:
+    return run_qday_replay(req.message)
+
+
+@app.get("/api/live-scan/suggestions")
+def api_live_scan_suggestions() -> Dict[str, Any]:
+    return {"hosts": SUGGESTED_HOSTS}
+
+
+@app.post("/api/live-scan")
+def api_live_scan(req: LiveScanRequest) -> Any:
+    try:
+        return scan_public_host(req.host)
+    except ValueError as exc:
+        return JSONResponse(status_code=400, content={"error": True, "message": str(exc)})
 
 
 @app.post("/api/lab/policy-tests")
