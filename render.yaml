@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: quantumguard-openssl-worker
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    plan: free
+    region: singapore
+    healthCheckPath: /api/status
+    envVars:
+      - key: PORT
+        value: 8000
+      - key: APP_DOMAIN
+        value: quantumguard-lab.veerbhanushali.in
+      - key: SUPABASE_URL
+        value: https://irjstudhbbjtnxqulriw.supabase.co
+      - key: RESEND_FROM_EMAIL
+        value: Quantum Guard <reports@quantumguard-lab.veerbhanushali.in>

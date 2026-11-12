@@ -689,3 +689,55 @@ def api_saas_report_email(req: SaaSReportEmailRequest, request: Request) -> JSON
     except Exception as exc:
         return JSONResponse({"error": True, "message": str(exc)}, status_code=400)
 
+
+@app.api_route("/api/webhooks/resend", methods=["GET", "POST"])
+async def api_webhooks_resend(request: Request) -> JSONResponse:
+    if request.method == "GET":
+        return JSONResponse({
+            "webhook_active": True,
+            "endpoint": "https://quantumguard-lab.veerbhanushali.in/api/webhooks/resend",
+            "link_tracker_domain": "rsend.quantumguard-lab.veerbhanushali.in",
+            "send_domain": "send.quantumguard-lab.veerbhanushali.in",
+        })
+    payload = await request.json()
+    evt_type = str(payload.get("type", "email.event")).upper().replace(".", "_")
+    data = payload.get("data") or {}
+    to_list = data.get("to") or []
+    to_email = to_list[0] if isinstance(to_list, list) and to_list else str(to_list or "recipient")
+    clicked_link = (data.get("click") or {}).get("link") or ""
+    detail = f"Clicked link: {clicked_link}" if clicked_link else f"Resend event {payload.get('type')} (id={data.get('email_id')})"
+    log_audit(to_email, f"RESEND_{evt_type}", clicked_link or "resend-webhook", detail)
+    return JSONResponse({"received": True, "event": payload.get("type")})
+
+
+@app.get("/worker", response_class=HTMLResponse)
+def openssl_worker_status_page() -> HTMLResponse:
+    caps = detect_capabilities()
+    return HTMLResponse(f"""<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8"/>
+  <title>Quantum Guard — Docker OpenSSL 3.5 Worker Node</title>
+  <style>
+    body {{ font-family: 'Segoe UI', sans-serif; background: #f8fafc; color: #0f172a; margin: 40px; }}
+    .box {{ max-width: 720px; margin: 0 auto; background: #fff; border: 1.5px solid #7c3aed; border-radius: 18px; padding: 28px; box-shadow: 0 12px 32px rgba(15,23,42,0.06); }}
+    .pill {{ display: inline-block; padding: 4px 12px; border-radius: 999px; border: 1.5px solid #10b981; color: #059669; font-weight: 800; font-size: 12px; }}
+    code {{ background: #f1f5f9; color: #7c3aed; padding: 2px 6px; border-radius: 4px; }}
+  </style>
+</head>
+<body>
+  <div class="box">
+    <span class="pill">&#9679; DOCKER OPENSSL 3.5 WORKER ONLINE</span>
+    <h1 style="margin:10px 0 4px;">Quantum Guard — C-Engine OpenSSL Worker Page</h1>
+    <p style="color:#64748b;font-size:14px;">This container provides low-level OpenSSL 3.5+ NIST FIPS 203/204/205 operations for the Next.js Full-Stack App at <b>https://quantumguard-lab.veerbhanushali.in</b>.</p>
+    <ul>
+      <li><b>OpenSSL Binary:</b> <code>{caps.get('openssl_version')}</code></li>
+      <li><b>ML-KEM (FIPS 203):</b> <code>{caps.get('openssl_mlkem')}</code></li>
+      <li><b>ML-DSA (FIPS 204):</b> <code>{caps.get('openssl_mldsa')}</code></li>
+      <li><b>SLH-DSA (FIPS 205):</b> <code>{caps.get('openssl_slhdsa')}</code></li>
+    </ul>
+  </div>
+</body>
+</html>""")
+
+

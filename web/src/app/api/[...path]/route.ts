@@ -191,8 +191,15 @@ function getAssetsAndFindings() {
 async function tryProxyToDockerOpenSSLWorker(req: NextRequest, subPath: string): Promise<NextResponse | null> {
   const cfg = getSupabaseConfig();
   if (!cfg.workerUrl) return null;
-  // Keep SaaS Auth & Supabase routes directly on Next.js; delegate OpenSSL CLI routes to Worker
-  if (subPath.startsWith("saas/") || subPath.startsWith("auth/")) return null;
+  // Keep Full-Stack SaaS, Auth, Supabase & Resend Webhooks 100% inside Next.js;
+  // ONLY delegate OpenSSL 3.5 C-binary operations to the Docker OpenSSL Worker page
+  if (
+    subPath.startsWith("saas/") ||
+    subPath.startsWith("auth/") ||
+    subPath.startsWith("webhooks/")
+  ) {
+    return null;
+  }
   try {
     const targetUrl = `${cfg.workerUrl}/api/${subPath}${req.nextUrl.search}`;
     const bodyText = req.method !== "GET" && req.method !== "HEAD" ? await req.text() : undefined;
@@ -212,6 +219,91 @@ async function tryProxyToDockerOpenSSLWorker(req: NextRequest, subPath: string):
     // Fallback seamlessly to Next.js built-in engine if Docker Worker is offline
     return null;
   }
+}
+
+function buildExecutiveReportHtml(s: any, user: any, domain: string): string {
+  const host = String(s.host || s.target_host || "Enterprise Target");
+  const readiness = Number(s.readiness_score ?? 0);
+  const verdict = String(s.verdict || "Assessed");
+  const kex = String(s.pqc_probe?.negotiated_group || s.kex_group || "unknown");
+  const certAlg = String(s.certificate?.signature_algorithm || s.cert_alg || "unknown");
+  const badgeColor = readiness >= 75 ? "#10b981" : "#ef4444";
+  const dashboardUrl = `https://${domain}/?target=${encodeURIComponent(host)}&utm_source=resend_report`;
+  const migrateUrl = `https://${domain}/?target=${encodeURIComponent(host)}&tab=migration&utm_source=resend_cta`;
+  const cbomUrl = `https://${domain}/api/cbom/1?utm_source=resend_cbom`;
+
+  const wavesRows = (s.remediation_waves || [])
+    .map(
+      (w: any) => `
+      <tr>
+        <td style="border:1px solid #e2e8f0;padding:10px;"><b>Wave ${w.wave}</b><br/><span style="color:#64748b;font-size:12px;">${w.title}</span></td>
+        <td style="border:1px solid #e2e8f0;padding:10px;"><code>${w.current}</code></td>
+        <td style="border:1px solid #e2e8f0;padding:10px;"><b style="color:#7c3aed;">${w.recommended}</b><br/><code>${w.config_snippet}</code></td>
+        <td style="border:1px solid #e2e8f0;padding:10px;"><b>${w.status}</b></td>
+      </tr>`
+    )
+    .join("");
+
+  const reasonsList = (s.reasons || [])
+    .map((r: string) => `<li style="margin-bottom:4px;">${r}</li>`)
+    .join("");
+
+  return `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8"/>
+  <title>Quantum Guard Report — ${host}</title>
+</head>
+<body style="font-family:'Segoe UI',Arial,sans-serif;background:#f8fafc;color:#0f172a;margin:24px;line-height:1.55;">
+  <div style="max-width:880px;margin:0 auto;background:#ffffff;border:1.5px solid #e2e8f0;border-radius:18px;padding:28px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:2px solid #e2e8f0;padding-bottom:16px;margin-bottom:20px;">
+      <div>
+        <div style="color:#7c3aed;font-weight:800;font-size:12px;text-transform:uppercase;">QUANTUM GUARD SAAS · ${domain}</div>
+        <h1 style="margin:4px 0;font-size:22px;">Post-Quantum Readiness Report: ${host}</h1>
+        <div style="font-size:13px;color:#64748b;">Prepared for <b>${user.full_name}</b> (${user.role_label} · ${user.organization})</div>
+      </div>
+      <div style="display:inline-block;padding:6px 14px;border-radius:999px;border:2px solid ${badgeColor};color:${badgeColor};font-weight:800;font-size:13px;">
+        ${verdict} (${readiness}%)
+      </div>
+    </div>
+
+    <p style="font-size:14px;">
+      <b>Negotiated KEM Group:</b> <code>${kex}</code> &nbsp;|&nbsp;
+      <b>Certificate Signature:</b> <code>${certAlg}</code> &nbsp;|&nbsp;
+      <b>TLS 1.2 Fallback:</b> ${s.tls12_accepted ? "Enabled (Action Required)" : "Disabled (TLS 1.3 Strict)"}
+    </p>
+
+    <h3 style="margin-top:18px;">1. Harvest-Now-Decrypt-Later (HNDL) &amp; NIST IR 8547 Findings</h3>
+    <ul>${reasonsList}</ul>
+
+    <h3 style="margin-top:18px;">2. Prioritized 3-Wave Post-Quantum Migration Roadmap</h3>
+    <table style="width:100%;border-collapse:collapse;margin-top:10px;font-size:13px;">
+      <thead>
+        <tr style="background:#f1f5f9;">
+          <th style="border:1px solid #e2e8f0;padding:10px;text-align:left;">Wave</th>
+          <th style="border:1px solid #e2e8f0;padding:10px;text-align:left;">Current</th>
+          <th style="border:1px solid #e2e8f0;padding:10px;text-align:left;">Recommended NIST Target</th>
+          <th style="border:1px solid #e2e8f0;padding:10px;text-align:left;">Status</th>
+        </tr>
+      </thead>
+      <tbody>${wavesRows}</tbody>
+    </table>
+
+    <!-- Tracked CTA Links (rewritten via rsend.quantumguard-lab.veerbhanushali.in) -->
+    <div style="margin-top:24px;padding-top:18px;border-top:1px solid #e2e8f0;display:flex;gap:12px;flex-wrap:wrap;">
+      <a href="${dashboardUrl}" style="display:inline-block;padding:10px 18px;border:1.5px solid #7c3aed;background:#ffffff;color:#7c3aed;border-radius:10px;font-weight:700;text-decoration:none;font-size:13px;">
+        Open Interactive DAG Workspace &rarr;
+      </a>
+      <a href="${migrateUrl}" style="display:inline-block;padding:10px 18px;border:1.5px solid #10b981;background:#ffffff;color:#059669;border-radius:10px;font-weight:700;text-decoration:none;font-size:13px;">
+        Apply 3-Wave PQC Auto-Remediation &rarr;
+      </a>
+      <a href="${cbomUrl}" style="display:inline-block;padding:10px 18px;border:1.5px solid #2563eb;background:#ffffff;color:#2563eb;border-radius:10px;font-weight:700;text-decoration:none;font-size:13px;">
+        Download CycloneDX 1.6 CBOM &rarr;
+      </a>
+    </div>
+  </div>
+</body>
+</html>`;
 }
 
 async function handleRequest(req: NextRequest, { params }: { params: { path: string[] } }) {
@@ -354,16 +446,7 @@ async function handleRequest(req: NextRequest, { params }: { params: { path: str
     }
     const body = await req.json();
     const s = body.scan_data || {};
-    const html = `<!DOCTYPE html><html><head><meta charset="utf-8"/><title>Quantum Guard Report — ${s.host}</title>
-    <style>body{font-family:Segoe UI,sans-serif;margin:32px;color:#0f172a;}table{width:100%;border-collapse:collapse;margin-top:12px;}th,td{border:1px solid #cbd5e1;padding:10px;text-align:left;}th{background:#f1f5f9;}</style></head>
-    <body><button onclick="window.print()" style="float:right;padding:8px 14px;border:1.5px solid #2563eb;background:#fff;color:#2563eb;border-radius:8px;font-weight:700;cursor:pointer;">Print / Save as PDF</button>
-    <div style="color:#7c3aed;font-weight:800;font-size:12px;">QUANTUM GUARD SAAS · ${cfg.domain}</div>
-    <h1>Post-Quantum Security Report: ${s.host}</h1>
-    <p>Prepared for <b>${user.full_name}</b> (${user.role_label} · ${user.organization}) | Readiness: <b>${s.readiness_score}%</b> | Verdict: <b>${s.verdict}</b></p>
-    <h3>Prioritized 3-Wave PQC Migration Roadmap</h3>
-    <table><thead><tr><th>Wave</th><th>Current</th><th>Recommended NIST Target</th><th>Status</th></tr></thead>
-    <tbody>${(s.remediation_waves || []).map((w: any) => `<tr><td><b>Wave ${w.wave}</b>: ${w.title}</td><td><code>${w.current}</code></td><td><b>${w.recommended}</b><br/><code>${w.config_snippet}</code></td><td>${w.status}</td></tr>`).join("")}</tbody></table>
-    </body></html>`;
+    const html = buildExecutiveReportHtml(s, user, cfg.domain);
     return new NextResponse(html, { status: 200, headers: { "Content-Type": "text/html" } });
   }
 
@@ -375,6 +458,7 @@ async function handleRequest(req: NextRequest, { params }: { params: { path: str
     const body = await req.json();
     const s = body.scan_data || {};
     const recipient = body.to_email || user.email;
+    const htmlBody = buildExecutiveReportHtml(s, user, cfg.domain);
     if (!cfg.resendKey || cfg.resendKey.startsWith("re_your_")) {
       return NextResponse.json({
         sent: false,
@@ -392,18 +476,78 @@ async function handleRequest(req: NextRequest, { params }: { params: { path: str
       body: JSON.stringify({
         from: cfg.resendFrom,
         to: [recipient],
-        subject: `[Quantum Guard] PQC Readiness Report for ${s.host} (${s.readiness_score}%)`,
-        html: `<h2>Quantum Guard PQC Report: ${s.host}</h2><p>Verdict: <b>${s.verdict}</b> (Readiness: <b>${s.readiness_score}%</b>)</p>`,
+        subject: `[Quantum Guard] PQC Readiness & HNDL Report for ${s.host} (${s.readiness_score}%)`,
+        html: htmlBody,
+        tags: [
+          { name: "category", value: "pqc_report" },
+          { name: "role", value: String(user.role || "ciso") },
+        ],
       }),
     });
     const rJson = await r.json();
+    await supabaseRest("POST", "qg_audit_events", {
+      user_email: recipient,
+      role: user.role || "ciso",
+      action: r.ok ? "RESEND_SENT" : "RESEND_ERROR",
+      target: String(s.host || "target"),
+      detail: r.ok ? `Sent via Resend (id=${rJson.id}, link-tracking=rsend.${cfg.domain})` : JSON.stringify(rJson),
+    });
     return NextResponse.json({
       sent: r.ok,
       resend_configured: true,
       target_host: s.host,
       email_id: rJson.id,
-      message: `Executive PQC Report for ${s.host} emailed to ${recipient} via Resend!`,
+      message: r.ok
+        ? `Executive PQC Report for ${s.host} emailed to ${recipient} via Resend (Link & Open Tracking active)!`
+        : `Resend error: ${rJson.message || "Check domain verification"}`,
     });
+  }
+
+  // Resend Webhook Receiver (email.sent, email.delivered, email.opened, email.clicked, email.bounced)
+  if (subPath === "webhooks/resend") {
+    if (req.method === "GET") {
+      const recent = await supabaseRest(
+        "GET",
+        "qg_audit_events",
+        undefined,
+        "action=like.RESEND_*&order=id.desc&limit=20"
+      );
+      return NextResponse.json({
+        webhook_active: true,
+        endpoint: `https://${cfg.domain}/api/webhooks/resend`,
+        link_tracker_domain: `rsend.${cfg.domain}`,
+        send_domain: `send.${cfg.domain}`,
+        events: recent || [],
+      });
+    }
+    if (req.method === "POST") {
+      const payload = await req.json().catch(() => ({}));
+      const evtType = String(payload.type || "email.event")
+        .toUpperCase()
+        .replace(/[^A-Z0-9_]/g, "_");
+      const data = payload.data || {};
+      const toEmail = Array.isArray(data.to) ? data.to[0] : String(data.to || "recipient");
+      const clickedLink = data.click?.link || data.link || "";
+      const detail = clickedLink
+        ? `Clicked tracked link: ${clickedLink} (IP: ${data.click?.ipAddress || "n/a"})`
+        : `Resend event ${payload.type || "unknown"} for subject "${data.subject || "PQC Report"}" (email_id=${data.email_id || "n/a"})`;
+
+      memState.auditLogs.unshift({
+        id: Date.now(),
+        timestamp: new Date().toISOString(),
+        action: `RESEND_${evtType}`,
+        target: toEmail,
+        detail,
+      });
+      await supabaseRest("POST", "qg_audit_events", {
+        user_email: toEmail,
+        role: "webhook",
+        action: `RESEND_${evtType}`,
+        target: clickedLink || String(data.email_id || cfg.domain),
+        detail,
+      });
+      return NextResponse.json({ received: true, event: payload.type, tracked_in_supabase: true });
+    }
   }
 
   // 3. Core Dashboard Endpoints (Status, Overview, Discovery, Risk, Planner, PKI, Lab, Benchmarks)
