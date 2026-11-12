@@ -503,7 +503,7 @@ def api_executive_report() -> HTMLResponse:
         f"<td><b>{html_escape(str(f['location']))}</b><br/><span style='color:#64748b;font-size:11px;'>Source: {html_escape(str(f['source']))}</span></td>"
         f"<td><code>{html_escape(str(f['algorithm']))}</code></td>"
         f"<td><span class='pill sev-{f['severity']}'>{f['severity'].upper()} ({f['score']}/100)</span></td>"
-        f"<td>{'<b style=\"color:#dc2626;\">Yes — Urgent HNDL Exposure</b>' if f['hndl_urgent'] else '<span style=\"color:#059669;\">No — Protected</span>'}</td>"
+        f"<td>{('<b style=color:#dc2626>Yes — Urgent HNDL Exposure</b>' if f['hndl_urgent'] else '<span style=color:#059669>No — Protected</span>')}</td>"
         f"<td>{html_escape(str(f['ir8547_status']))}</td>"
         f"</tr>"
         for f in top_findings
