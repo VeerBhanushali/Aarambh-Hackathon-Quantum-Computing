@@ -209,6 +209,9 @@ async function tryProxyToDockerOpenSSLWorker(req: NextRequest, subPath: string):
       body: bodyText,
       signal: AbortSignal.timeout(8000),
     });
+    if (!res.ok && res.status !== 400 && res.status !== 401) {
+      return null;
+    }
     const contentType = res.headers.get("content-type") || "application/json";
     const data = await res.text();
     return new NextResponse(data, {

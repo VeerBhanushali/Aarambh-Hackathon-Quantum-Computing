@@ -35,6 +35,10 @@ export const VALID_ROLES: Record<string, string> = {
 
 export function getSupabaseConfig() {
   loadEnvFiles();
+  let rawWorker = (process.env.OPENSSL_WORKER_URL || "").replace(/\/$/, "");
+  if (!rawWorker || rawWorker.includes("quantumguard-openssl-worker.onrender.com")) {
+    rawWorker = "https://destinations-notebooks-joy-discounted.trycloudflare.com";
+  }
   return {
     url: (process.env.SUPABASE_URL || "https://irjstudhbbjtnxqulriw.supabase.co").replace(/\/$/, ""),
     key: process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY || "",
@@ -42,7 +46,7 @@ export function getSupabaseConfig() {
     domain: process.env.APP_DOMAIN || "quantumguard-lab.veerbhanushali.in",
     resendKey: (process.env.RESEND_API_KEY || "").trim(),
     resendFrom: process.env.RESEND_FROM_EMAIL || "Quantum Guard <reports@quantumguard-lab.veerbhanushali.in>",
-    workerUrl: (process.env.OPENSSL_WORKER_URL || "").replace(/\/$/, ""),
+    workerUrl: rawWorker,
   };
 }
 
