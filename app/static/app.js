@@ -1,3 +1,21 @@
+// Theme helpers: chart colors follow the active theme (white by default).
+function cssVar(name) {
+  return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+}
+
+function setTheme(theme) {
+  document.documentElement.setAttribute("data-theme", theme);
+  try { localStorage.setItem("qg-theme", theme); } catch (e) {}
+  const btn = document.getElementById("btn-theme");
+  if (btn) btn.innerHTML = theme === "light" ? "&#127769; Dark" : "&#9728;&#65039; White";
+}
+
+async function toggleTheme() {
+  const next = document.documentElement.getAttribute("data-theme") === "light" ? "dark" : "light";
+  setTheme(next);
+  await refreshAll(); // redraw charts with the new colors
+}
+
 // Quantum Guard Single-Page Dashboard Logic (Vanilla JS + Chart.js)
 
 let chartOverviewWaves = null;
@@ -161,10 +179,10 @@ function renderOverviewChart(progress) {
     options: {
       responsive: true,
       maintainAspectRatio: false,
-      plugins: { legend: { labels: { color: "#f8fafc" } } },
+      plugins: { legend: { labels: { color: cssVar("--chart-legend") } } },
       scales: {
-        x: { stacked: true, ticks: { color: "#94a3b8" }, grid: { display: false } },
-        y: { stacked: true, beginAtZero: true, ticks: { color: "#94a3b8", precision: 0 }, grid: { color: "#1e293b" } },
+        x: { stacked: true, ticks: { color: cssVar("--chart-tick") }, grid: { display: false } },
+        y: { stacked: true, beginAtZero: true, ticks: { color: cssVar("--chart-tick"), precision: 0 }, grid: { color: cssVar("--chart-grid") } },
       },
     },
   });
@@ -277,7 +295,7 @@ async function loadFindings() {
       options: {
         responsive: true,
         maintainAspectRatio: false,
-        plugins: { legend: { position: "right", labels: { color: "#f8fafc" } } },
+        plugins: { legend: { position: "right", labels: { color: cssVar("--chart-legend") } } },
       },
     });
   }
@@ -525,8 +543,8 @@ async function runHybridLab() {
   const h = res.hndl_explanation;
   document.getElementById("hndl-explanation-box").innerHTML = `
     <p style="margin-bottom:8px;"><b>Captured Wire Transcript Size:</b> <code>${h.captured_transcript_bytes} bytes</code></p>
-    <p style="margin-bottom:8px; color:#fca5a5;"><b>Classical-Only Risk:</b> ${h.classical_only_risk}</p>
-    <p style="color:#86efac;"><b>Hybrid Combiner Protection:</b> ${h.hybrid_protection}</p>
+    <p style="margin-bottom:8px; color:var(--tone-danger);"><b>Classical-Only Risk:</b> ${h.classical_only_risk}</p>
+    <p style="color:var(--tone-success);"><b>Hybrid Combiner Protection:</b> ${h.hybrid_protection}</p>
   `;
 }
 
@@ -661,10 +679,10 @@ function renderBenchmarks(data) {
       responsive: true,
       maintainAspectRatio: false,
       scales: {
-        y: { type: "logarithmic", ticks: { color: "#94a3b8" }, grid: { color: "#1e293b" } },
-        x: { ticks: { color: "#94a3b8", maxRotation: 65, minRotation: 40, font: { size: 10 } } },
+        y: { type: "logarithmic", ticks: { color: cssVar("--chart-tick") }, grid: { color: cssVar("--chart-grid") } },
+        x: { ticks: { color: cssVar("--chart-tick"), maxRotation: 65, minRotation: 40, font: { size: 10 } } },
       },
-      plugins: { legend: { labels: { color: "#f8fafc" } } },
+      plugins: { legend: { labels: { color: cssVar("--chart-legend") } } },
     },
   });
 
@@ -702,10 +720,10 @@ function renderBenchmarks(data) {
       responsive: true,
       maintainAspectRatio: false,
       scales: {
-        y: { type: "logarithmic", ticks: { color: "#94a3b8" }, grid: { color: "#1e293b" } },
-        x: { ticks: { color: "#94a3b8", maxRotation: 55, minRotation: 30, font: { size: 10 } } },
+        y: { type: "logarithmic", ticks: { color: cssVar("--chart-tick") }, grid: { color: cssVar("--chart-grid") } },
+        x: { ticks: { color: cssVar("--chart-tick"), maxRotation: 55, minRotation: 30, font: { size: 10 } } },
       },
-      plugins: { legend: { labels: { color: "#f8fafc" } } },
+      plugins: { legend: { labels: { color: cssVar("--chart-legend") } } },
     },
   });
 }
@@ -861,6 +879,7 @@ async function refreshAll() {
 }
 
 window.addEventListener("DOMContentLoaded", async () => {
+  setTheme(document.documentElement.getAttribute("data-theme") || "light");
   const tlDate = document.getElementById("tl-today-date");
   if (tlDate) tlDate.textContent = new Date().toLocaleDateString(undefined, { year: "numeric", month: "long" });
   await refreshAll();
@@ -904,7 +923,7 @@ function renderLiveResult(r) {
         <h3 style="margin:0;">${escapeHtml(r.host)}</h3>
         <span class="badge ${badge}" style="font-size:0.95rem;">${escapeHtml(r.verdict)}${unknown ? "" : ` · risk ${r.score}`}</span>
       </div>
-      ${r.warning ? `<p style="color:#fbbf24; margin-top:10px;">&#9888;&#65039; ${escapeHtml(r.warning)}</p>` : ""}
+      ${r.warning ? `<p style="color:var(--tone-warn); margin-top:10px;">&#9888;&#65039; ${escapeHtml(r.warning)}</p>` : ""}
       <ul style="margin-top:10px; font-size:0.9rem;">${(r.reasons || []).map((x) => `<li>${escapeHtml(x)}</li>`).join("")}</ul>
       <div class="table-wrap" style="margin-top:10px;"><table>
         <tr><th>Probe</th><th>Offered</th><th>Negotiated</th><th>Handshake</th></tr>
@@ -971,7 +990,7 @@ async function runQDay() {
   const card = (title, s) => `
     <div class="kpi-card" style="flex:1; border-color:${s.attacker_decrypted ? "var(--critical)" : "var(--ok)"};">
       <div class="kpi-label">${title} · ${s.recorded_bytes} bytes recorded</div>
-      <div style="font-size:1.1rem; font-weight:700; margin:6px 0; color:${s.attacker_decrypted ? "#fca5a5" : "#86efac"};">
+      <div style="font-size:1.1rem; font-weight:700; margin:6px 0; color:${s.attacker_decrypted ? "var(--tone-danger)" : "var(--tone-success)"};">
         ${s.attacker_decrypted ? "&#128275; ATTACKER READS IT" : "&#128274; ATTACKER FAILS"}
       </div>
       <div style="font-size:0.85rem;">${s.attacker_decrypted ? `Recovered: <code>${escapeHtml(s.attacker_plaintext)}</code>` : `AES-GCM rejected the attacker's key (${escapeHtml(s.attacker_error || "")}).`}</div>

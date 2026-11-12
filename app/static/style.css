@@ -1,4 +1,4 @@
-/* Quantum Guard Dark Theme UI Styles */
+/* Quantum Guard UI styles: white (default) and dark themes */
 :root {
   --bg: #0b0f19;
   --bg-card: #111827;
@@ -14,7 +14,64 @@
   --medium: #eab308;
   --low: #38bdf8;
   --ok: #22c55e;
+  /* text tones used for status text on cards (dark theme values) */
+  --tone-danger: #fca5a5;
+  --tone-success: #86efac;
+  --tone-warn: #fbbf24;
+  --tone-soft: #e2e8f0;
+  --topbar-bg: rgba(17, 24, 39, 0.95);
+  --row-head: rgba(30, 41, 59, 0.7);
+  --row-hover: rgba(30, 41, 59, 0.35);
+  --step-bg: rgba(30, 41, 59, 0.45);
+  --code-bg: #090d16;
+  --code-text: #cbd5e1;
+  --chart-grid: #1e293b;
+  --chart-tick: #94a3b8;
+  --chart-legend: #f8fafc;
 }
+
+/* White theme (default). Toggle with the sun/moon button; choice stored per browser. */
+:root[data-theme="light"] {
+  --bg: #f6f7f9;
+  --bg-card: #ffffff;
+  --bg-elevated: #eef1f5;
+  --border: #d5dbe3;
+  --text: #0f172a;
+  --text-muted: #526075;
+  --primary: #2563eb;
+  --primary-hover: #1d4ed8;
+  --accent: #7c3aed;
+  --critical: #dc2626;
+  --high: #ea580c;
+  --medium: #a16207;
+  --low: #0369a1;
+  --ok: #15803d;
+  --tone-danger: #b91c1c;
+  --tone-success: #15803d;
+  --tone-warn: #a16207;
+  --tone-soft: #1e293b;
+  --topbar-bg: rgba(255, 255, 255, 0.96);
+  --row-head: #eef1f5;
+  --row-hover: #f3f6fa;
+  --step-bg: #f3f6fa;
+  --code-bg: #f1f4f8;
+  --code-text: #1e293b;
+  --chart-grid: #e2e8f0;
+  --chart-tick: #526075;
+  --chart-legend: #0f172a;
+}
+:root[data-theme="light"] .btn-outline:hover { background: #e2e8f0; }
+:root[data-theme="light"] .cap-banner { background: #eef1f5; }
+:root[data-theme="light"] .demo-progress-bar { background: #eef2ff; border-bottom-color: #a5b4fc; color: #312e81; }
+:root[data-theme="light"] .sev-critical { background: #fee2e2; color: #991b1b; border-color: #f87171; }
+:root[data-theme="light"] .sev-high { background: #ffedd5; color: #9a3412; border-color: #fb923c; }
+:root[data-theme="light"] .sev-medium { background: #fef9c3; color: #854d0e; border-color: #eab308; }
+:root[data-theme="light"] .sev-low { background: #e0f2fe; color: #075985; border-color: #38bdf8; }
+:root[data-theme="light"] .sev-ok { background: #dcfce7; color: #166534; border-color: #4ade80; }
+:root[data-theme="light"] .badge-hndl { background: #fee2e2; color: #7f1d1d; border-color: #dc2626; }
+:root[data-theme="light"] .toast { box-shadow: 0 10px 25px rgba(15, 23, 42, 0.15); }
+:root[data-theme="light"] .card,
+:root[data-theme="light"] .kpi-card { box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06); }
 
 * {
   box-sizing: border-box;
@@ -32,7 +89,7 @@ body {
 
 /* Header & Navigation */
 .topbar {
-  background: rgba(17, 24, 39, 0.95);
+  background: var(--topbar-bg);
   border-bottom: 1px solid var(--border);
   padding: 12px 24px;
   display: flex;
@@ -306,7 +363,7 @@ th, td {
 }
 
 th {
-  background: rgba(30, 41, 59, 0.7);
+  background: var(--row-head);
   color: var(--text-muted);
   font-weight: 600;
   text-transform: uppercase;
@@ -315,7 +372,7 @@ th {
 }
 
 tr:hover td {
-  background: rgba(30, 41, 59, 0.35);
+  background: var(--row-hover);
 }
 
 /* Severity Badges */
@@ -398,7 +455,7 @@ input[type="range"] {
 /* Step trace in Hybrid Lab */
 .step-item {
   border-left: 3px solid var(--primary);
-  background: rgba(30, 41, 59, 0.45);
+  background: var(--step-bg);
   padding: 10px 14px;
   margin-bottom: 10px;
   border-radius: 0 8px 8px 0;
@@ -493,11 +550,11 @@ code, pre {
 }
 
 pre.code-block {
-  background: #090d16;
+  background: var(--code-bg);
   border: 1px solid var(--border);
   padding: 10px;
   border-radius: 6px;
   overflow-x: auto;
-  color: #cbd5e1;
+  color: var(--code-text);
   margin-top: 6px;
 }

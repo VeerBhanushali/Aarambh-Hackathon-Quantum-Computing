@@ -1,6 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <script>
+    // Apply the saved theme before first paint (white is the default).
+    (function () {
+      var t = "light";
+      try { t = localStorage.getItem("qg-theme") || "light"; } catch (e) {}
+      document.documentElement.setAttribute("data-theme", t);
+    })();
+  </script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Quantum Guard — Post-Quantum Cryptography Assessment & Migration Platform (PS07)</title>
@@ -33,6 +41,7 @@
 
     <div class="top-actions">
       <button class="btn btn-accent" id="btn-guided-demo" onclick="runGuidedDemo()">&#9654; Run Guided Demo</button>
+      <button class="btn btn-outline" id="btn-theme" onclick="toggleTheme()" title="Switch between white and dark theme">&#127769; Dark</button>
       <button class="btn btn-outline" id="btn-reset-demo" onclick="resetDemoUI()">&#128465; Reset Demo</button>
       <a class="btn btn-outline" href="/api/report" target="_blank">Executive Report / PDF</a>
     </div>
@@ -41,7 +50,7 @@
   <!-- Runtime Capability Banner -->
   <div class="cap-banner" id="cap-banner">
     <span id="cap-text">Checking cryptographic runtime capabilities (OpenSSL 3.5+ / FIPS 203/204/205)...</span>
-    <div id="cap-degraded" style="display:none; margin-top:6px; color:#fbbf24; font-size:0.85rem;"></div>
+    <div id="cap-degraded" style="display:none; margin-top:6px; color:var(--tone-warn); font-size:0.85rem;"></div>
     <div class="severity-legend">
       <span>Severity Legend:</span>
       <span class="badge sev-critical">Critical (&ge;80)</span>
@@ -478,7 +487,7 @@
       <div class="card">
         <h3>Computed Key Takeaways &amp; Machine Specifications</h3>
         <div id="bench-machine-info" style="font-size:0.82rem; color:var(--text-muted); margin-bottom:8px;"></div>
-        <ul id="bench-takeaways" style="padding-left:20px; font-size:0.88rem; color:#e2e8f0;"></ul>
+        <ul id="bench-takeaways" style="padding-left:20px; font-size:0.88rem; color:var(--tone-soft);"></ul>
       </div>
 
       <div class="grid-2">
@@ -656,7 +665,7 @@
           <div class="tl-item today">
             <div class="tl-dot"></div>
             <h4>TODAY (<span id="tl-today-date"></span>) — Migration Window Open</h4>
-            <p style="color:#86efac; font-size:0.88rem;">
+            <p style="color:var(--tone-success); font-size:0.88rem;">
               <b>You are here.</b> NIST IR 8547 (<i>Transition to Post-Quantum Cryptography Standards</i>, initial public draft November 2024) sets the 2030 / 2035 dates below; FN-DSA (FIPS 206) is in draft. Immediate priority: eliminate HNDL exposure on long-shelf-life data by deploying <code>X25519MLKEM768</code> hybrid TLS 1.3 and building internal PQC PKI.
             </p>
           </div>
