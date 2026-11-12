@@ -1,6 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <script>
+    // Apply the saved theme before first paint (white is the default).
+    (function () {
+      var t = "light";
+      try { t = localStorage.getItem("qg-theme") || "light"; } catch (e) {}
+      document.documentElement.setAttribute("data-theme", t);
+    })();
+  </script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Quantum Guard — Post-Quantum Cryptography Assessment & Migration Platform (PS07)</title>
@@ -21,6 +29,7 @@
     <nav class="nav-tabs" id="main-nav">
       <button class="nav-btn active" data-tab="overview">Overview</button>
       <button class="nav-btn" data-tab="discovery">Discovery &amp; CBOM</button>
+      <button class="nav-btn" data-tab="live">Live Internet Scan</button>
       <button class="nav-btn" data-tab="risk">Risk &amp; Mosca</button>
       <button class="nav-btn" data-tab="migration">Migration Planner</button>
       <button class="nav-btn" data-tab="pki">PKI &amp; Dual-Cert</button>
@@ -32,6 +41,7 @@
 
     <div class="top-actions">
       <button class="btn btn-accent" id="btn-guided-demo" onclick="runGuidedDemo()">&#9654; Run Guided Demo</button>
+      <button class="btn btn-outline" id="btn-theme" onclick="toggleTheme()" title="Switch between white and dark theme">&#127769; Dark</button>
       <button class="btn btn-outline" id="btn-reset-demo" onclick="resetDemoUI()">&#128465; Reset Demo</button>
       <a class="btn btn-outline" href="/api/report" target="_blank">Executive Report / PDF</a>
     </div>
@@ -40,7 +50,7 @@
   <!-- Runtime Capability Banner -->
   <div class="cap-banner" id="cap-banner">
     <span id="cap-text">Checking cryptographic runtime capabilities (OpenSSL 3.5+ / FIPS 203/204/205)...</span>
-    <div id="cap-degraded" style="display:none; margin-top:6px; color:#fbbf24; font-size:0.85rem;"></div>
+    <div id="cap-degraded" style="display:none; margin-top:6px; color:var(--tone-warn); font-size:0.85rem;"></div>
     <div class="severity-legend">
       <span>Severity Legend:</span>
       <span class="badge sev-critical">Critical (&ge;80)</span>
@@ -448,6 +458,16 @@
           </div>
         </div>
       </div>
+      <div class="card" style="margin-top:16px;">
+        <h3>
+          <span>&#9200; Q-Day Replay: Harvest Now, Decrypt Later</span>
+          <button class="btn btn-accent btn-sm" onclick="runQDay()">&#9654; Record today, attack at Q-Day</button>
+        </h3>
+        <p style="color:var(--text-muted); font-size:0.85rem;">An eavesdropper records a classical and a hybrid session today. At Q-Day (simulated) a quantum computer recovers the X25519 secret key with Shor&rsquo;s algorithm. Which recording can it read?</p>
+        <input type="text" id="qday-msg" value="Patient record #4471: diagnosis confidential until 2051" style="margin:8px 0;" />
+        <div id="qday-result"></div>
+      </div>
+
     </section>
 
     <!-- ==================== 7. BENCHMARKS SECTION ==================== -->
@@ -467,7 +487,7 @@
       <div class="card">
         <h3>Computed Key Takeaways &amp; Machine Specifications</h3>
         <div id="bench-machine-info" style="font-size:0.82rem; color:var(--text-muted); margin-bottom:8px;"></div>
-        <ul id="bench-takeaways" style="padding-left:20px; font-size:0.88rem; color:#e2e8f0;"></ul>
+        <ul id="bench-takeaways" style="padding-left:20px; font-size:0.88rem; color:var(--tone-soft);"></ul>
       </div>
 
       <div class="grid-2">
@@ -588,6 +608,35 @@
       </div>
     </section>
 
+    <!-- ==================== LIVE INTERNET SCAN ==================== -->
+    <section class="tab-section" id="tab-live">
+      <div class="section-header">
+        <div>
+          <h2>Is This Website Quantum-Ready? (Live Internet Scan)</h2>
+          <p>Type any public website. We perform real TLS 1.3 handshakes to it right now and check for post-quantum hybrid key exchange (X25519MLKEM768).</p>
+        </div>
+      </div>
+      <div class="card">
+        <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+          <input type="text" id="live-host" placeholder="e.g. yourbank.com" style="max-width:360px;" onkeydown="if(event.key==='Enter')runLiveScan()" />
+          <button class="btn btn-accent" id="btn-live-scan" onclick="runLiveScan()">&#127760; Scan Live</button>
+          <button class="btn btn-outline btn-sm" onclick="runLiveScanAll()">Scan all suggestions</button>
+        </div>
+        <div id="live-suggestions" style="margin-top:10px; display:flex; gap:6px; flex-wrap:wrap;"></div>
+        <p style="color:var(--text-muted); font-size:0.8rem; margin-top:10px;">Only public hostnames on port 443 are accepted. Results are verified against the public Mozilla trust store; if a proxy intercepts TLS, we say so instead of showing wrong results.</p>
+      </div>
+      <div id="live-result" style="margin-top:14px;"></div>
+      <div class="card" style="margin-top:14px;">
+        <h3>Scanned this session</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Website</th><th>Verdict</th><th>Key exchange (PQC client)</th><th>Certificate</th><th>TLS 1.2 accepted</th><th>Measured (UTC)</th></tr></thead>
+            <tbody id="live-history"><tr><td colspan="6" style="color:var(--text-muted);">No scans yet.</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
     <!-- ==================== 9. TIMELINE SECTION ==================== -->
     <section class="tab-section" id="tab-timeline">
       <div class="section-header">
@@ -616,7 +665,7 @@
           <div class="tl-item today">
             <div class="tl-dot"></div>
             <h4>TODAY (<span id="tl-today-date"></span>) — Migration Window Open</h4>
-            <p style="color:#86efac; font-size:0.88rem;">
+            <p style="color:var(--tone-success); font-size:0.88rem;">
               <b>You are here.</b> NIST IR 8547 (<i>Transition to Post-Quantum Cryptography Standards</i>, initial public draft November 2024) sets the 2030 / 2035 dates below; FN-DSA (FIPS 206) is in draft. Immediate priority: eliminate HNDL exposure on long-shelf-life data by deploying <code>X25519MLKEM768</code> hybrid TLS 1.3 and building internal PQC PKI.
             </p>
           </div>

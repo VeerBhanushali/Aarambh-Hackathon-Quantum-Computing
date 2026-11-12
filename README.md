@@ -1,6 +1,7 @@
 # Quantum Guard — Post-Quantum Cryptography Assessment & Migration Platform (PS07)
 
 > **Team: open [NEXT_STEPS.md](NEXT_STEPS.md) first** — remaining tasks before submission, in order, with acceptance checks.
+> New to post-quantum crypto? Start with [docs/LEARN_PS07.md](docs/LEARN_PS07.md).
 
 **Quantum Guard** is an end-to-end Post-Quantum Cryptography (PQC) discovery, risk assessment, migration planning, PKI dual-certificate serving, hybrid encryption combiner, and benchmarking platform built for problem statement **PS07**.
 

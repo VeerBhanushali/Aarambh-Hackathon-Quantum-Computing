@@ -388,3 +388,97 @@ def run_hybrid_demo(message: str, mode: str = "hybrid", tamper: bool = False) ->
             ),
         },
     }
+
+
+def _record_session(message: str, hybrid: bool) -> Dict[str, Any]:
+    """Run one real key establishment + AES-256-GCM encryption and return what is on the wire.
+
+    The receiver's X25519 private key is returned separately ONLY so the Q-Day simulation can hand it to the
+    simulated attacker; it never leaves this module (the API returns fingerprints only).
+    """
+    rx_priv = x25519.X25519PrivateKey.generate()
+    rx_pub = rx_priv.public_key()
+    eph = x25519.X25519PrivateKey.generate()
+    eph_pub = eph.public_key().public_bytes(serialization.Encoding.Raw, serialization.PublicFormat.Raw)
+    ss_classical = eph.exchange(rx_pub)
+    if hybrid:
+        _, ct_pq, ss_pq, _, _, _, _, backend = _mlkem768_keygen_encap_decap()
+    else:
+        ct_pq, ss_pq, backend = b"", b"", "none"
+    key = combine_hybrid_key(ss_classical, ss_pq, eph_pub, ct_pq)
+    nonce = os.urandom(12)
+    ct = AESGCM(key).encrypt(nonce, message.encode("utf-8"), b"quantum-guard")
+    return {
+        "wire": {"eph_x25519_pub": eph_pub, "ct_pq": ct_pq, "nonce": nonce, "ciphertext": ct},
+        "rx_x25519_priv": rx_priv,
+        "backend": backend,
+        "true_key_fp": _fp8(key),
+    }
+
+
+def _attacker_attempt(session: Dict[str, Any]) -> Dict[str, Any]:
+    """Simulated quantum attacker: knows the receiver's X25519 private key (as Shor's algorithm would yield)
+    and the recorded wire transcript, but cannot break ML-KEM-768 (no known quantum attack)."""
+    w = session["wire"]
+    # Step 1 (simulated Shor): recover the classical shared secret from the recorded ephemeral public key.
+    ss_classical = session["rx_x25519_priv"].exchange(x25519.X25519PublicKey.from_public_bytes(w["eph_x25519_pub"]))
+    # Step 2: the ML-KEM shared secret is unknown. The attacker's best move is a guess; any wrong 32 bytes fail.
+    ss_pq_guess = b"" if not w["ct_pq"] else os.urandom(32)
+    key = combine_hybrid_key(ss_classical, ss_pq_guess, w["eph_x25519_pub"], w["ct_pq"])
+    try:
+        pt = AESGCM(key).decrypt(w["nonce"], w["ciphertext"], b"quantum-guard").decode("utf-8")
+        return {"decrypted": True, "plaintext": pt, "attacker_key_fp": _fp8(key)}
+    except Exception as exc:
+        return {"decrypted": False, "plaintext": None, "attacker_key_fp": _fp8(key), "error": type(exc).__name__}
+
+
+def run_qday_replay(message: str) -> Dict[str, Any]:
+    """Harvest-now-decrypt-later replay: record a classical and a hybrid session, then simulate Q-Day.
+
+    The encryption, the recorded transcripts and the attacker's decryption attempts are all real cryptography.
+    Only the quantum step itself is simulated: we hand the attacker the X25519 private key that Shor's algorithm
+    would compute from the public key.
+    """
+    caps = detect_capabilities()
+    if not (caps.get("oqs_available") or caps.get("openssl_mlkem")):
+        return {"error": True, "message": "ML-KEM-768 unavailable: Q-Day replay needs OpenSSL 3.5+ or liboqs-python."}
+    if not message:
+        message = "Patient record #4471: diagnosis confidential until 2051"
+
+    out: Dict[str, Any] = {"message_length": len(message), "sessions": {}}
+    for mode, hyb in (("classical", False), ("hybrid", True)):
+        s = _record_session(message, hyb)
+        attack = _attacker_attempt(s)
+        w = s["wire"]
+        out["sessions"][mode] = {
+            "recorded_bytes": len(w["eph_x25519_pub"]) + len(w["ct_pq"]) + len(w["nonce"]) + len(w["ciphertext"]),
+            "recorded": {
+                "x25519_public": len(w["eph_x25519_pub"]),
+                "mlkem_ciphertext": len(w["ct_pq"]),
+                "aes_gcm_ciphertext": len(w["ciphertext"]),
+            },
+            "ciphertext_preview_hex": w["ciphertext"][:16].hex(),
+            "true_key_fp": s["true_key_fp"],
+            "attacker_key_fp": attack["attacker_key_fp"],
+            "attacker_decrypted": attack["decrypted"],
+            "attacker_plaintext": attack["plaintext"],
+            "attacker_error": attack.get("error"),
+            "backend": s["backend"],
+        }
+    out["steps"] = [
+        "2026 — Harvest: an eavesdropper records both sessions (public keys + ciphertext only).",
+        "Q-Day (simulated) — a quantum computer runs Shor's algorithm on the recorded X25519 public key and recovers the secret key.",
+        "Classical session: X25519 was the only secret, so the attacker re-derives the AES key and reads the message.",
+        "Hybrid session: the key also depends on the ML-KEM-768 secret. No known quantum attack breaks it, so the attacker's key is wrong and AES-GCM rejects it.",
+    ]
+    out["simulation_note"] = (
+        "No quantum computer is used. The attacker is handed the X25519 secret key that Shor's algorithm would compute; "
+        "every other step (encryption, recording, key derivation, decryption attempt) is real."
+    )
+    log_audit(
+        "crypto_lab",
+        "qday_replay",
+        "hndl",
+        f"classical_broken={out['sessions']['classical']['attacker_decrypted']}, hybrid_broken={out['sessions']['hybrid']['attacker_decrypted']}",
+    )
+    return out
