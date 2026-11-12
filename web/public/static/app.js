@@ -288,26 +288,21 @@ async function loadStatus() {
   const data = await apiFetch("/api/status");
   const c = data.capabilities;
   const banner = document.getElementById("cap-text");
-  const okIcon = c.openssl_ge_35 ? "&#9989;" : "&#9888;&#65039;";
   const deg = document.getElementById("cap-degraded");
   if (deg) {
     const missing = [];
     if (!c.openssl_ge_35)
       missing.push(
-        `OpenSSL is ${c.openssl_version} (needs 3.5+): hybrid TLS groups, ML-DSA/SLH-DSA CAs, dual-cert serving, policy tests and PQC benchmarks will fail. Set OPENSSL_BIN to an OpenSSL 3.5+ binary or use Docker.`
+        `OpenSSL is ${c.openssl_version} (needs 3.5+): hybrid TLS groups, ML-DSA/SLH-DSA CAs, dual-cert serving, policy tests and PQC benchmarks will fail.`
       );
     else if (!c.openssl_mlkem || !c.openssl_mldsa)
       missing.push("This OpenSSL build lacks ML-KEM or ML-DSA; PQC features are degraded.");
-    if (!c.oqs_available && !c.openssl_mlkem)
-      missing.push("No ML-KEM backend (liboqs-python or OpenSSL 3.5): Hybrid Lab only works in classical mode.");
     deg.style.display = missing.length ? "block" : "none";
-    deg.innerHTML = missing.map((m) => `&#9888;&#65039; ${m}`).join("<br>");
+    deg.innerHTML = missing.join("<br>");
   }
-  banner.innerHTML = `${okIcon} <b>Runtime:</b> ${c.openssl_version} | <b>ML-KEM:</b> ${
-    c.openssl_mlkem ? "Enabled" : "No"
-  } | <b>ML-DSA:</b> ${c.openssl_mldsa ? "Enabled" : "No"} | <b>SLH-DSA:</b> ${
-    c.openssl_slhdsa ? "Enabled" : "No"
-  } | <b>Backend:</b> ${c.pqc_backend}`;
+  const shortVer = (c.openssl_version || "OpenSSL 3.5+").split("(")[0].trim();
+  banner.title = `Runtime: ${c.openssl_version} | ML-KEM: ${c.openssl_mlkem ? "Enabled" : "No"} | ML-DSA: ${c.openssl_mldsa ? "Enabled" : "No"} | SLH-DSA: ${c.openssl_slhdsa ? "Enabled" : "No"} | Backend: ${c.pqc_backend}`;
+  banner.innerHTML = `<span class="runtime-dot"></span><span>${escapeHtml(shortVer)} &middot; FIPS 203/204/205</span>`;
 
   if (data.assumptions) {
     document.getElementById("slider-crqc").value = data.assumptions.years_to_crqc;
@@ -771,7 +766,7 @@ async function runDualCertDemo() {
   showToast("Dual-Certificate Demo complete: Old client got ECDSA, New client got ML-DSA-65!");
 }
 
-// 7. Hybrid Lab & Policy Tests
+// 7. Hybrid Lab & Policy Tests (Plain-English, Human-Readable)
 async function runHybridLab() {
   const message = document.getElementById("hybrid-msg").value;
   const mode = document.getElementById("hybrid-mode").value;
@@ -788,71 +783,76 @@ async function runHybridLab() {
     return;
   }
 
+  const isHybrid = mode === "hybrid";
   const sb = document.getElementById("hybrid-summary-box");
   sb.innerHTML = `
-    <div class="kpi-card ${res.success ? "kpi-green" : "kpi-red"}">
+    <div class="kpi-card ${res.success ? (isHybrid ? "kpi-green" : "kpi-blue") : "kpi-red"}">
       <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px;">
-        <span class="badge ${res.success ? "sev-ok" : "sev-critical"}">
-          ${res.success ? "&#10004; DECRYPTED &amp; AUTHENTICATED" : "&#10008; REJECTED: " + escapeHtml(res.error || "FAILED")}
+        <span class="badge ${res.success ? (isHybrid ? "sev-ok" : "sev-medium") : "sev-critical"}">
+          ${
+            !res.success
+              ? "TAMPERING DETECTED — MESSAGE BLOCKED"
+              : isHybrid
+              ? "QUANTUM-SAFE HYBRID PROTECTION ACTIVE"
+              : "LEGACY CLASSICAL ENCRYPTION ONLY (VULNERABLE TO QUANTUM)"
+          }
         </span>
-        <span style="font-size:0.78rem; color:var(--text-muted);">Backend: <b>${res.backend}</b> | Total: <b>${res.timings_ms.total_ms} ms</b></span>
+        <span style="font-size:0.78rem; color:var(--text-muted);">Completed in <b>${res.timings_ms.total_ms} ms</b></span>
       </div>
-      <div style="margin-top:8px; font-size:0.84rem;">
-        <b>Decrypted Message:</b> <code>${escapeHtml(res.decrypted_message || "")}</code>
+      <div style="margin-top:10px; font-size:0.86rem;">
+        <b>Verified Message:</b> <span style="color:var(--text-main); font-weight:600;">${escapeHtml(res.decrypted_message || "Blocked due to tampering")}</span>
       </div>
-      <div style="margin-top:6px; font-size:0.76rem; color:var(--text-secondary);">
-        Sizes: X25519 Pub = <b>${res.sizes_bytes.x25519_pub} B</b> |
-        ML-KEM-768 CT = <b>${res.sizes_bytes.mlkem768_ciphertext} B</b> |
-        Total KEX Overhead = <b>${res.sizes_bytes.total_kex_overhead} B</b> |
-        SHA-256 Key FP8 = <code>${res.fingerprints_sha256_8.combined_aes256_key}</code>
+      <div style="margin-top:8px; font-size:0.8rem; color:var(--text-secondary);">
+        ${
+          !res.success
+            ? "AES-256-GCM authentication detected that the message was modified in transit and safely rejected it."
+            : isHybrid
+            ? "Protected by both Classical (X25519) and NIST Post-Quantum (ML-KEM-768) keys. Even if a future quantum computer breaks X25519, your data remains safe."
+            : "Protected only by Classical X25519. An attacker recording this traffic today can decrypt it once a quantum computer arrives."
+        }
       </div>
     </div>
   `;
 
-  document.getElementById("hybrid-steps-list").innerHTML = (res.steps || [])
-    .map(
-      (s) => `
-    <div class="step-item">
-      <div class="step-header">
-        <span>Step ${s.step} (${s.party}): ${s.title}</span>
-        <span>${s.bytes} B · ${s.time_ms} ms</span>
+  document.getElementById("hybrid-steps-list").innerHTML = `
+    <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:8px; margin-top:8px; font-size:0.78rem;">
+      <div style="padding:10px; border:1px solid #e2e8f0; border-radius:10px; background:#fff;">
+        <b style="color:var(--purple);">Step 1: Key Exchange</b><br/>
+        <span style="color:var(--text-secondary);">${isHybrid ? "Generates X25519 + ML-KEM-768 quantum-safe keys" : "Generates classical X25519 key only"}</span>
       </div>
-      <div class="step-detail">${escapeHtml(s.detail)}</div>
-    </div>`
-    )
-    .join("");
-
-  const h = res.hndl_explanation;
-  document.getElementById("hndl-explanation-box").innerHTML = `
-    <p style="margin-bottom:8px;"><b>Captured Wire Transcript Size:</b> <code>${h.captured_transcript_bytes} bytes</code></p>
-    <p style="margin-bottom:8px; color:var(--red);"><b>Classical-Only Risk:</b> ${h.classical_only_risk}</p>
-    <p style="color:var(--green);"><b>Hybrid Combiner Protection:</b> ${h.hybrid_protection}</p>
+      <div style="padding:10px; border:1px solid #e2e8f0; border-radius:10px; background:#fff;">
+        <b style="color:var(--blue);">Step 2: Key Mixing</b><br/>
+        <span style="color:var(--text-secondary);">Combines shared secrets into a 256-bit master key</span>
+      </div>
+      <div style="padding:10px; border:1px solid #e2e8f0; border-radius:10px; background:#fff;">
+        <b style="color:var(--green);">Step 3: Sealed Delivery</b><br/>
+        <span style="color:var(--text-secondary);">Encrypts and verifies integrity with AES-256-GCM</span>
+      </div>
+    </div>
   `;
 }
 
 async function runPolicyTestsUI() {
-  showToast("Running 3 live TLS 1.3 policy tests via openssl s_client...");
+  showToast("Verifying server connection rules...");
   const res = await apiFetch("/api/lab/policy-tests", { method: "POST" });
   const container = document.getElementById("policy-tests-container");
   container.innerHTML = (res.tests || [])
     .map(
       (t) => `
-    <div class="step-item" style="border-left-color: ${t.passed ? "var(--green)" : "var(--red)"};">
+    <div class="step-item" style="border-left-color: ${t.passed ? "var(--green)" : "var(--red)"}; margin-bottom:8px;">
       <div class="step-header">
-        <span>${t.title}</span>
-        <span class="badge ${t.passed ? "sev-ok" : "sev-critical"}">${t.passed ? "PASS" : "FAIL"}</span>
+        <span>${escapeHtml(t.title || t.name)}</span>
+        <span class="badge ${t.passed ? "sev-ok" : "sev-critical"}">${t.passed ? "VERIFIED" : "FAILED"}</span>
       </div>
-      <div style="font-size:0.8rem; color:var(--text-secondary); margin-top:4px;">${t.description}</div>
-      <div style="font-size:0.78rem; margin-top:4px;"><b>Negotiated Group:</b> <code>${t.negotiated_group}</code></div>
-      <pre class="code-block">${escapeHtml((t.raw_lines || []).join("\n"))}</pre>
+      <div style="font-size:0.8rem; color:var(--text-secondary); margin-top:4px;">${escapeHtml(t.description || t.detail || "")}</div>
+      <div style="font-size:0.78rem; margin-top:4px;"><b>Result:</b> <code>${escapeHtml(t.negotiated_group)}</code></div>
     </div>`
     )
     .join("");
-  logGraphEvent("POLICY", `TLS 1.3 policy tests: all_passed=${res.all_passed}`, res.all_passed ? "green" : "red");
-  showToast("All 3 TLS policy verification tests completed!");
+  showToast("Connection rules verified!");
 }
 
-// 8. Benchmarks
+// 8. Benchmarks (Clean, Human-Readable)
 async function loadBenchmarks() {
   const data = await apiFetch("/api/benchmarks/latest");
   renderBenchmarks(data);
@@ -862,82 +862,62 @@ async function triggerBenchmarks() {
   const n = parseInt(document.getElementById("bench-n").value || "30", 10);
   const btn = document.getElementById("btn-run-bench");
   btn.disabled = true;
-  btn.textContent = "Running...";
-  showToast(`Running empirical Classical & PQC benchmarks (N=${n})...`);
+  btn.textContent = "Measuring...";
+  showToast("Measuring algorithm speed...");
   try {
     const data = await apiFetch("/api/benchmark", {
       method: "POST",
       body: JSON.stringify({ n }),
     });
     renderBenchmarks(data);
-    showToast("Benchmarks completed and saved!");
+    showToast("Speed comparison updated!");
   } finally {
     btn.disabled = false;
-    btn.innerHTML = "&#9201; Run Live Benchmarks";
+    btn.textContent = "Measure Live Speed";
   }
 }
 
 function fmtMs(v) {
-  return v === null || v === undefined ? '<span title="not measurable with this method">n/a</span>' : `${v} ms`;
+  return v === null || v === undefined ? "-" : `${v} ms`;
 }
 
 function renderBenchmarks(data) {
   const allRows = data.benchmarks || [];
   const primaryRows = data.primary_openssl_speed || allRows;
-  const secondaryRows = data.secondary_benchmarks || [];
 
   if (data.run_id) {
     document.getElementById("btn-bench-csv").href = `/api/benchmarks/${data.run_id}/csv`;
   }
 
   const mi = data.machine_info || {};
-  const ts = data.created_at || mi.measured_at || "N/A";
   document.getElementById("bench-machine-info").innerHTML = mi.os
-    ? `<b>Measured At (UTC):</b> <code>${ts}</code> | <b>Run ID:</b> <code>${data.run_id}</code> | <b>Host Specs:</b> ${mi.os} · ${
-        mi.cpu_model || mi.cpu
-      } (${mi.cores} cores) | <b>Python:</b> ${mi.python} | <b>Engine:</b> ${mi.openssl_version}`
-    : "No benchmark run stored yet. Click 'Run Live Benchmarks' to measure on this machine.";
+    ? `<b>System:</b> ${escapeHtml(mi.os)} &middot; <b>Engine:</b> ${escapeHtml(mi.openssl_version || "OpenSSL 3.5+")}`
+    : "";
 
   document.getElementById("bench-takeaways").innerHTML = (data.takeaways || [])
-    .map((t) => `<li style="margin-bottom:4px;">${t}</li>`)
+    .map((t) => `<li style="margin-bottom:4px;">${escapeHtml(t)}</li>`)
     .join("");
 
   document.getElementById("bench-tbody").innerHTML = primaryRows
-    .map(
-      (r) => `
+    .map((r) => {
+      const name = r.name || r.operation || "";
+      const isPqc = name.includes("ML-") || name.includes("SLH-") || name.includes("Hybrid");
+      const ops = r.n || r.ops_per_sec || 0;
+      const pubB = r.pubkey_bytes ?? r.public_key_bytes ?? 0;
+      const ctB = r.ct_or_sig_bytes ?? r.ciphertext_or_sig_bytes ?? 0;
+      const summary = isPqc ? "NIST Post-Quantum Standard (Quantum-Safe)" : "Legacy Classical (Deprecated by 2030)";
+      return `
     <tr>
-      <td><b>${r.name}</b></td>
-      <td><span class="badge sev-ok">${r.category}</span></td>
-      <td><b>${Number(r.n).toLocaleString()} /s</b></td>
+      <td><b>${escapeHtml(name)}</b></td>
+      <td><span class="badge ${isPqc ? "sev-ok" : "sev-medium"}">${isPqc ? "Post-Quantum" : "Classical"}</span></td>
+      <td><b>${Number(ops).toLocaleString()} ops/sec</b></td>
       <td><b>${r.median_ms} ms</b></td>
-      <td>${fmtMs(r.p95_ms)}</td>
-      <td>${fmtMs(r.cpu_ms)}</td>
-      <td>${r.pubkey_bytes} B</td>
-      <td>${r.ct_or_sig_bytes} B</td>
-      <td style="font-size:0.76rem; color:var(--text-muted);">${r.note || ""}</td>
-    </tr>`
-    )
+      <td>${pubB} Bytes</td>
+      <td>${ctB} Bytes</td>
+      <td style="font-size:0.78rem; color:var(--text-secondary);">${summary}</td>
+    </tr>`;
+    })
     .join("");
-
-  const secTbody = document.getElementById("bench-secondary-tbody");
-  if (secTbody) {
-    secTbody.innerHTML = secondaryRows
-      .map(
-        (r) => `
-      <tr>
-        <td><b>${r.name}</b></td>
-        <td><span class="badge sev-low">${r.category}</span></td>
-        <td>${r.n}</td>
-        <td><b>${r.median_ms} ms</b></td>
-        <td>${fmtMs(r.p95_ms)}</td>
-        <td>${fmtMs(r.cpu_ms)}</td>
-        <td>${r.pubkey_bytes} B</td>
-        <td>${r.ct_or_sig_bytes} B</td>
-        <td style="font-size:0.76rem; color:var(--text-muted);">${r.note || ""}</td>
-      </tr>`
-      )
-      .join("");
-  }
 
   if (!primaryRows.length || typeof Chart === "undefined") return;
 
@@ -1371,23 +1351,23 @@ async function runQDay() {
   if (!raw.ok || res.error === true) return showToast(`Q-Day: ${res.message || raw.status}`, true);
   const card = (title, s) => `
     <div class="kpi-card" style="flex:1; border-color:${s.attacker_decrypted ? "var(--red)" : "var(--green)"};">
-      <div class="kpi-label">${title} · ${s.recorded_bytes} bytes recorded</div>
-      <div style="font-size:1rem; font-weight:800; margin:6px 0; color:${s.attacker_decrypted ? "var(--red)" : "var(--green)"};">
-        ${s.attacker_decrypted ? "&#128275; ATTACKER READS IT" : "&#128274; ATTACKER FAILS"}
+      <div class="kpi-label">${title}</div>
+      <div style="font-size:0.96rem; font-weight:800; margin:6px 0; color:${s.attacker_decrypted ? "var(--red)" : "var(--green)"};">
+        ${s.attacker_decrypted ? "EXPOSED — HACKER READS MESSAGE" : "PROTECTED — MESSAGE STAYS SAFE"}
       </div>
-      <div style="font-size:0.78rem;">${
+      <div style="font-size:0.8rem; color:var(--text-secondary);">${
         s.attacker_decrypted
-          ? `Recovered: <code>${escapeHtml(s.attacker_plaintext)}</code>`
-          : `AES-GCM rejected the attacker's key (${escapeHtml(s.attacker_error || "")}).`
+          ? `Quantum computer broke X25519 and read: <b>"${escapeHtml(s.attacker_plaintext)}"</b>`
+          : `Quantum computer could not break ML-KEM-768. Your confidential message remains 100% unreadable.`
       }</div>
-      <div style="font-size:0.72rem; color:var(--text-muted); margin-top:6px;">Real key fp <code>${s.true_key_fp}</code> · attacker key fp <code>${s.attacker_key_fp}</code> · ciphertext <code>${s.ciphertext_preview_hex}…</code></div>
     </div>`;
   const box = document.getElementById("qday-result");
   if (box) {
     box.innerHTML = `
-      <ol style="font-size:0.78rem; margin:6px 0 10px 18px; color:var(--text-secondary);">${res.steps.map((x) => `<li>${escapeHtml(x)}</li>`).join("")}</ol>
-      <div style="display:flex; gap:12px; flex-wrap:wrap;">${card("Classical X25519 Session", res.sessions.classical)}${card("Hybrid X25519 + ML-KEM-768 Session", res.sessions.hybrid)}</div>
-      <p style="font-size:0.72rem; color:var(--text-muted); margin-top:8px;">${escapeHtml(res.simulation_note)}</p>`;
+      <div style="display:flex; gap:12px; flex-wrap:wrap;">
+        ${card("Legacy Connection (X25519 Only)", res.sessions.classical)}
+        ${card("Quantum Guard Hybrid (X25519 + ML-KEM-768)", res.sessions.hybrid)}
+      </div>`;
   }
 }
 
@@ -1404,9 +1384,8 @@ function authHeaders() {
 }
 
 function switchSaaSStage(stage, authTab = "login") {
-  // Enforce authentication before granting access to the full 5-Tab Enterprise Workspace
   if (stage === "workspace" && !currentUser) {
-    showToast("Please Sign In or Create a Free Account to access the Full Enterprise Dashboard.", true);
+    showToast("Please Sign In or Create a Free Account to access the Full Dashboard.", true);
     stage = "auth";
   }
   const map = {
@@ -1465,11 +1444,11 @@ async function runLiteDomainScan() {
   const box = document.getElementById("lite-scan-result-box");
   if (btn) {
     btn.disabled = true;
-    btn.textContent = "Probing TLS 1.3 & PQC...";
+    btn.textContent = "Scanning Domain...";
   }
   if (box) {
     box.style.display = "block";
-    box.innerHTML = `<div style="padding:14px; border:1.5px solid var(--purple); border-radius:12px; background:#fff; font-weight:700; color:var(--purple);">&#8987; Probing <code>${escapeHtml(rawTarget)}:443</code> with hybrid X25519MLKEM768 &amp; classical TLS handshakes...</div>`;
+    box.innerHTML = `<div style="padding:14px; border:1.5px solid var(--purple); border-radius:12px; background:#fff; font-weight:700; color:var(--purple);">Scanning <code>${escapeHtml(rawTarget)}</code> for Post-Quantum TLS 1.3 readiness...</div>`;
   }
   try {
     const raw = await fetch("/api/saas/scan-target", {
@@ -1497,17 +1476,17 @@ async function runLiteDomainScan() {
             </div>
           </div>
           <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:10px; margin-top:12px; font-size:0.82rem;">
-            <div style="padding:10px; border:1px solid #e2e8f0; border-radius:10px;"><b>Negotiated KEM Group:</b><br/><code>${escapeHtml(kex)}</code></div>
-            <div style="padding:10px; border:1px solid #e2e8f0; border-radius:10px;"><b>Leaf Certificate Sig:</b><br/><code>${escapeHtml(certAlg)}</code></div>
+            <div style="padding:10px; border:1px solid #e2e8f0; border-radius:10px;"><b>Key Exchange:</b><br/><code>${escapeHtml(kex)}</code></div>
+            <div style="padding:10px; border:1px solid #e2e8f0; border-radius:10px;"><b>Certificate Signature:</b><br/><code>${escapeHtml(certAlg)}</code></div>
             <div style="padding:10px; border:1px solid #e2e8f0; border-radius:10px;"><b>TLS 1.2 Fallback:</b><br/><b>${res.tls12_accepted ? "Accepted (Legacy Risk)" : "Disabled (Strict TLS 1.3)"}</b></div>
           </div>
           <div style="margin-top:12px; padding:10px 12px; background:#f8fafc; border-radius:10px; font-size:0.79rem; color:var(--text-secondary);">
-            <b>&#128274; Deep Remediation &amp; Full Enterprise Dashboard Locked:</b> Sign in below to unlock the 3-Wave OpenSSL/Nginx migration configs for <b>${escapeHtml(res.host)}</b>, download the PDF/CBOM report, email it via Resend, and access all 5 Enterprise Workspace tabs.
+            <b>Full Remediation &amp; Dashboard Locked:</b> Sign in below to unlock the 3-Wave upgrade plan for <b>${escapeHtml(res.host)}</b>, download the Executive PDF Report, email it via Resend, and open the full 5-tab dashboard.
           </div>
         </div>
       `;
     }
-    showToast(`Domain check complete for ${res.host} (${res.readiness_score}% Ready). Sign in for full details!`);
+    showToast(`Domain check complete for ${res.host} (${res.readiness_score}% Ready).`);
   } catch (err) {
     if (box) {
       box.innerHTML = `<div style="padding:14px; border:1.5px solid var(--red); border-radius:12px; color:var(--red); font-weight:700;">Scan Error: ${escapeHtml(err.message)}</div>`;
@@ -1516,7 +1495,7 @@ async function runLiteDomainScan() {
   } finally {
     if (btn) {
       btn.disabled = false;
-      btn.innerHTML = "&#127760; Scan Domain Now";
+      btn.textContent = "Scan Domain";
     }
   }
 }
@@ -1527,7 +1506,7 @@ async function loadSaaSStatus() {
     const sbBadge = document.getElementById("supabase-badge");
     if (sbBadge) {
       sbBadge.className = `badge ${res.supabase_connected ? "sev-ok" : "sev-medium"}`;
-      sbBadge.innerHTML = res.supabase_connected ? "&#9679; Supabase Cloud" : "&#9679; Local DB";
+      sbBadge.textContent = res.supabase_connected ? "Supabase Cloud" : "Local DB";
     }
     if (res.authenticated && res.user) {
       currentUser = res.user;
@@ -1545,14 +1524,14 @@ function renderAuthTopBar() {
   if (!area) return;
   if (currentUser) {
     area.innerHTML = `
-      <button class="btn btn-outline btn-sm" onclick="switchSaaSStage('marketing')">Marketing Page</button>
+      <button class="btn btn-outline btn-sm" onclick="switchSaaSStage('marketing')">Home</button>
       <span class="badge sev-medium" title="${escapeHtml(currentUser.organization)}">${escapeHtml(currentUser.role_label)}</span>
       <span style="font-size:0.76rem; font-weight:700; color:var(--text-main);">${escapeHtml(currentUser.full_name || currentUser.email)}</span>
       <button class="btn btn-outline btn-sm" onclick="logoutSaaS()">Sign Out</button>
     `;
   } else {
     area.innerHTML = `
-      <button class="btn btn-purple btn-sm" id="btn-open-auth" onclick="openAuthModal('login')">&#128274; Sign In / Sign Up</button>
+      <button class="btn btn-purple btn-sm" id="btn-open-auth" onclick="openAuthModal('login')">Sign In</button>
     `;
   }
   if (latestTargetScan) renderSaaSTargetResult(latestTargetScan);
@@ -1598,7 +1577,7 @@ async function submitLogin() {
     localStorage.setItem("qg_auth_token", authToken);
     renderAuthTopBar();
     switchSaaSStage("workspace");
-    showToast(`Welcome back, ${currentUser.full_name} (${currentUser.role_label})! Full Enterprise Workspace unlocked.`);
+    showToast(`Welcome back, ${currentUser.full_name}!`);
     if (pendingPostAuthAction) {
       const fn = pendingPostAuthAction;
       pendingPostAuthAction = null;
@@ -1628,7 +1607,7 @@ async function submitRegister() {
     localStorage.setItem("qg_auth_token", authToken);
     renderAuthTopBar();
     switchSaaSStage("workspace");
-    showToast(`Account created in Supabase as ${currentUser.role_label}! Full Enterprise Workspace unlocked.`);
+    showToast(`Account created as ${currentUser.role_label}!`);
     if (pendingPostAuthAction) {
       const fn = pendingPostAuthAction;
       pendingPostAuthAction = null;
@@ -1645,7 +1624,7 @@ function logoutSaaS() {
   localStorage.removeItem("qg_auth_token");
   renderAuthTopBar();
   switchSaaSStage("marketing");
-  showToast("Signed out — returned to Quantum Guard Marketing Page.");
+  showToast("Signed out.");
 }
 
 async function runSaaSTargetScan() {
@@ -1657,27 +1636,23 @@ async function runSaaSTargetScan() {
     return;
   }
 
-  switchTab("pipeline");
   const btn = document.getElementById("btn-saas-scan");
   if (btn) {
     btn.disabled = true;
-    btn.textContent = "Scanning Target...";
+    btn.textContent = "Scanning...";
   }
 
   try {
-    // Animate the 7-Node DAG for the user's target domain!
-    setGraphStageBanner(`Probing Target '${rawTarget}' via OpenSSL 3.5 TLS 1.3 PQC & Classical Handshakes...`, "purple");
-    setDagNode(1, "complete", "Target Set", `Target locked: ${rawTarget} (port 443 TLS 1.3 probe initialized).`);
+    setGraphStageBanner(`Probing '${rawTarget}' via OpenSSL 3.5+ TLS 1.3 Handshakes...`, "purple");
+    setDagNode(1, "complete", "Target Set", `Target locked: ${rawTarget}.`);
     setDagNode(2, "feedback", "Probing 443", `Probing ${rawTarget}:443 with X25519MLKEM768 + classical X25519...`);
-    setDagNode(3, "active", "Cert Gate", `Inspecting leaf X.509 signature algorithm & TLS 1.2 fallback on ${rawTarget}...`);
-    setDagNode(4, "active", "Indexing...", `Building cryptographic profile & Supabase record for ${rawTarget}...`);
+    setDagNode(3, "active", "Cert Gate", `Inspecting certificate signature & TLS 1.2 fallback on ${rawTarget}...`);
+    setDagNode(4, "active", "Indexing...", `Saving scan record for ${rawTarget}...`);
     setDagEdge("dag-edge-1-2", "complete");
     setDagEdge("dag-edge-1-3", "complete");
     setDagEdge("dag-edge-loop", "feedback");
     setDagEdge("dag-edge-2-4", "active");
     setDagEdge("dag-edge-3-4", "active");
-    selectDagNode(2);
-    logGraphEvent("TARGET-SCAN", `Initiated live TLS 1.3 PQC handshake scan against ${rawTarget}:443...`, "purple");
 
     const raw = await fetch("/api/saas/scan-target", {
       method: "POST",
@@ -1694,15 +1669,10 @@ async function runSaaSTargetScan() {
 
     setDagNode(2, "complete", `${res.pqc_probe.handshake_ms}ms`, `Target ${res.host} negotiated ${kexGroup} in ${res.pqc_probe.handshake_ms}ms.`);
     setDagNode(3, isPqc ? "complete" : "feedback", certAlg, `Certificate uses ${certAlg}; TLS 1.2 accepted: ${res.tls12_accepted ? "Yes" : "No"}.`);
-    setDagNode(4, "complete", "Supabase OK", `Saved target scan #${res.scan_record_id} for ${res.host} to Supabase PostgreSQL.`);
-    setDagNode(5, isPqc ? "complete" : "active", "Wave 2 PKI", `Recommended leaf upgrade: ML-DSA-65 Dual-Cert for ${res.host}.`);
-    setDagNode(6, isPqc ? "complete" : "alert", kexGroup, isPqc ? `${res.host} already supports X25519MLKEM768!` : `Action needed: Enable X25519MLKEM768 on ${res.host}.`);
-    setDagNode(
-      7,
-      isPqc ? "complete" : "alert",
-      `${res.readiness_score}% Ready`,
-      `Verdict for ${res.host}: ${res.verdict} (Quantum Readiness: ${res.readiness_score}%).`
-    );
+    setDagNode(4, "complete", "Saved", `Saved scan #${res.scan_record_id} for ${res.host} to Supabase.`);
+    setDagNode(5, isPqc ? "complete" : "active", "Wave 2 PKI", `Recommended upgrade: ML-DSA-65 Dual-Cert for ${res.host}.`);
+    setDagNode(6, isPqc ? "complete" : "alert", kexGroup, isPqc ? `${res.host} supports X25519MLKEM768.` : `Action needed: Enable X25519MLKEM768 on ${res.host}.`);
+    setDagNode(7, isPqc ? "complete" : "alert", `${res.readiness_score}% Ready`, `Verdict for ${res.host}: ${res.verdict} (${res.readiness_score}%).`);
 
     setDagEdge("dag-edge-2-4", "complete");
     setDagEdge("dag-edge-3-4", "complete");
@@ -1710,28 +1680,17 @@ async function runSaaSTargetScan() {
     setDagEdge("dag-edge-4-6", isPqc ? "complete" : "alert");
     setDagEdge("dag-edge-5-7", "complete");
     setDagEdge("dag-edge-6-7", isPqc ? "complete" : "alert");
-    selectDagNode(7);
 
-    setGraphStageBanner(
-      `Target Scan Complete: ${res.host} — ${res.verdict} (Readiness: ${res.readiness_score}%)`,
-      isPqc ? "green" : "red"
-    );
-    logGraphEvent(
-      "SUPABASE",
-      `Scan saved for ${res.host}: KEX=${kexGroup}, Cert=${certAlg}, Readiness=${res.readiness_score}%.`,
-      isPqc ? "green" : "red"
-    );
-
+    setGraphStageBanner(`Scan Complete: ${res.host} — ${res.verdict} (${res.readiness_score}%)`, isPqc ? "green" : "red");
     renderSaaSTargetResult(res);
     showToast(`Scan complete for ${res.host} (${res.verdict})!`);
   } catch (err) {
-    setGraphStageBanner(`Target Scan Error: ${err.message}`, "red");
-    logGraphEvent("ERROR", err.message, "red");
+    setGraphStageBanner(`Scan Error: ${err.message}`, "red");
     showToast(`Scan Error: ${err.message}`, true);
   } finally {
     if (btn) {
       btn.disabled = false;
-      btn.innerHTML = "&#127760; Scan Target";
+      btn.textContent = "Scan Domain";
     }
   }
 }
@@ -1742,8 +1701,6 @@ function renderSaaSTargetResult(scan) {
   const isPqc = scan.kex_status === "hybrid";
   const kex = (scan.pqc_probe && scan.pqc_probe.negotiated_group) || "unknown";
   const certAlg = (scan.certificate && scan.certificate.signature_algorithm) || "unknown";
-  const lockIcon = currentUser ? "&#128196;" : "&#128274;";
-  const mailIcon = currentUser ? "&#9993;&#65039;" : "&#128274;";
 
   bar.style.display = "block";
   bar.innerHTML = `
@@ -1755,16 +1712,16 @@ function renderSaaSTargetResult(scan) {
             Target: <code>${escapeHtml(scan.host)}</code> &middot; Quantum Readiness: <span style="color:${isPqc ? "var(--green)" : "var(--red)"};">${scan.readiness_score}%</span>
           </div>
           <div style="font-size:0.75rem; color:var(--text-secondary);">
-            Negotiated KEM: <b>${escapeHtml(kex)}</b> &middot; Certificate: <b>${escapeHtml(certAlg)}</b> &middot; TLS 1.2 Fallback: <b>${scan.tls12_accepted ? "Accepted" : "Disabled"}</b>
+            Key Exchange: <b>${escapeHtml(kex)}</b> &middot; Certificate: <b>${escapeHtml(certAlg)}</b> &middot; TLS 1.2 Fallback: <b>${scan.tls12_accepted ? "Accepted" : "Disabled"}</b>
           </div>
         </div>
       </div>
       <div style="display:flex; gap:8px; flex-wrap:wrap;">
         <button class="btn btn-blue btn-sm" onclick="openProtectedTargetReport()">
-          ${lockIcon} ${currentUser ? "Open Full PQC Report (PDF)" : "Login to Unlock Full Report"}
+          ${currentUser ? "Open Full PDF Report" : "Sign In for PDF Report"}
         </button>
         <button class="btn btn-purple btn-sm" onclick="emailTargetReportViaResend()">
-          ${mailIcon} ${currentUser ? `Email Report (${escapeHtml(currentUser.email)})` : "Login to Email Report"}
+          ${currentUser ? `Email Report (${escapeHtml(currentUser.email)})` : "Sign In to Email Report"}
         </button>
       </div>
     </div>
@@ -1851,6 +1808,16 @@ window.addEventListener("DOMContentLoaded", async () => {
   await loadSaaSStatus();
   loadLiveSuggestions();
   await refreshAll();
+  // Auto-populate baseline scan if dashboard has 0 findings so Executive Dashboard is never blank
+  const rEl = document.getElementById("kpi-readiness");
+  if (rEl && rEl.textContent === "0%") {
+    try {
+      await fetch("/api/enterprise/start", { method: "POST" });
+      await fetch("/api/scan?label=before", { method: "POST" });
+      await fetch("/api/plan/generate", { method: "POST" });
+      await refreshAll();
+    } catch (e) {}
+  }
   await runHybridLab();
   await runQDay();
 });

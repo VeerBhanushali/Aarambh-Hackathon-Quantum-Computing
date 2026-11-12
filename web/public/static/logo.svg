@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <defs>
+    <linearGradient id="qg-grad" x1="0" y1="0" x2="64" y2="64" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#7c3aed" />
+      <stop offset="55%" stop-color="#4f46e5" />
+      <stop offset="100%" stop-color="#2563eb" />
+    </linearGradient>
+    <linearGradient id="qg-ring" x1="8" y1="8" x2="56" y2="56" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.95" />
+      <stop offset="100%" stop-color="#e0e7ff" stop-opacity="0.75" />
+    </linearGradient>
+  </defs>
+  <!-- Shield / Rounded Squircle Base -->
+  <rect x="4" y="4" width="56" height="56" rx="16" fill="url(#qg-grad)" />
+  <!-- Subtle Quantum Orbital Ring -->
+  <ellipse cx="32" cy="32" rx="22" ry="11" transform="rotate(-28 32 32)" stroke="url(#qg-ring)" stroke-width="1.75" stroke-dasharray="3 2" opacity="0.55" />
+  <!-- Shield Outline Inside -->
+  <path d="M32 11L48 17.5V30.5C48 41.2 41.1 49.8 32 53C22.9 49.8 16 41.2 16 30.5V17.5L32 11Z" fill="rgba(255,255,255,0.12)" stroke="#ffffff" stroke-width="2" stroke-linejoin="round" />
+  <!-- Crisp QG Monogram -->
+  <text x="32" y="36.5" text-anchor="middle" fill="#ffffff" font-family="Inter, system-ui, -apple-system, sans-serif" font-weight="900" font-size="15.5" letter-spacing="-0.5">QG</text>
+</svg>
