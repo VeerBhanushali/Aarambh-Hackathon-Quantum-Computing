@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Quantum Guard — Pitch Deck | Team VICIOUS (Dhruvam &amp; Veer)</title>
+  <link rel="icon" type="image/svg+xml" href="/static/logo.svg" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg-gradient: linear-gradient(135deg, #f8fafc 0%, #f3e8ff 48%, #eff6ff 100%);
+      --purple: #7c3aed;
+      --purple-soft: rgba(124, 58, 237, 0.1);
+      --blue: #2563eb;
+      --green: #059669;
+      --red: #dc2626;
+      --text-main: #0f172a;
+      --text-secondary: #334155;
+      --text-muted: #64748b;
+      --border: #e2e8f0;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg-gradient);
+      color: var(--text-main);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+    /* Top Deck Toolbar */
+    .deck-toolbar {
+      position: fixed;
+      top: 14px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 1000;
+      background: rgba(255, 255, 255, 0.92);
+      backdrop-filter: blur(16px);
+      border: 1.5px solid rgba(124, 58, 237, 0.25);
+      border-radius: 999px;
+      padding: 8px 18px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      box-shadow: 0 12px 32px rgba(15, 23, 42, 0.08);
+    }
+    .deck-toolbar .brand {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 800;
+      font-size: 0.85rem;
+      color: var(--text-main);
+    }
+    .deck-toolbar .brand img {
+      width: 26px;
+      height: 26px;
+      border-radius: 7px;
+    }
+    .deck-btn {
+      background: #ffffff;
+      border: 1.5px solid var(--border);
+      color: var(--text-main);
+      padding: 5px 12px;
+      border-radius: 999px;
+      font-size: 0.76rem;
+      font-weight: 700;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.18s ease;
+    }
+    .deck-btn:hover {
+      border-color: var(--purple);
+      color: var(--purple);
+    }
+    .deck-btn.primary {
+      background: linear-gradient(135deg, var(--purple), var(--blue));
+      color: #ffffff;
+      border: none;
+    }
+    .slide-counter {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: var(--purple);
+      min-width: 54px;
+      text-align: center;
+    }
+
+    /* Slide Container */
+    .deck-wrapper {
+      max-width: 1240px;
+      margin: 0 auto;
+      padding: 78px 24px 48px;
+      display: flex;
+      flex-direction: column;
+      gap: 36px;
+    }
+    .slide {
+      background: rgba(255, 255, 255, 0.94);
+      backdrop-filter: blur(20px);
+      border: 1.5px solid rgba(124, 58, 237, 0.22);
+      border-radius: 26px;
+      padding: 44px 52px;
+      min-height: 640px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      box-shadow: 0 24px 60px -15px rgba(15, 23, 42, 0.08);
+      position: relative;
+      overflow: hidden;
+    }
+    .slide::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 6px;
+      background: linear-gradient(90deg, var(--purple), var(--blue), var(--green));
+    }
+
+    /* Slide Header & Footer */
+    .slide-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 22px;
+    }
+    .slide-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--purple-soft);
+      border: 1px solid rgba(124, 58, 237, 0.28);
+      color: var(--purple);
+      font-size: 0.74rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      padding: 5px 14px;
+      border-radius: 999px;
+    }
+    .team-tag {
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: var(--text-muted);
+    }
+    .team-tag b {
+      color: var(--purple);
+    }
+    .slide-title {
+      font-size: 2.15rem;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      line-height: 1.18;
+      color: var(--text-main);
+      margin-bottom: 8px;
+    }
+    .slide-sub {
+      font-size: 1.02rem;
+      color: var(--text-secondary);
+      max-width: 900px;
+      margin-bottom: 24px;
+    }
+    .gradient-text {
+      background: linear-gradient(135deg, var(--purple), var(--blue));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    /* Grids & Cards inside slides */
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; }
+    .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+    .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+
+    .p-card {
+      background: #f8fafc;
+      border: 1.5px solid var(--border);
+      border-radius: 18px;
+      padding: 20px 22px;
+    }
+    .p-card.highlight {
+      background: linear-gradient(135deg, rgba(124, 58, 237, 0.05), rgba(37, 99, 235, 0.05));
+      border-color: rgba(124, 58, 237, 0.35);
+    }
+    .p-card.danger {
+      background: rgba(254, 242, 242, 0.7);
+      border-color: rgba(220, 38, 38, 0.3);
+    }
+    .p-card.success {
+      background: rgba(236, 253, 245, 0.75);
+      border-color: rgba(5, 150, 105, 0.35);
+    }
+    .p-card h3 {
+      font-size: 1.02rem;
+      font-weight: 800;
+      margin-bottom: 8px;
+      color: var(--text-main);
+    }
+    .p-card p, .p-card li {
+      font-size: 0.88rem;
+      color: var(--text-secondary);
+      line-height: 1.55;
+    }
+    .p-card ul {
+      padding-left: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .stat-big {
+      font-size: 2.2rem;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      line-height: 1.1;
+      margin: 4px 0 6px;
+    }
+    code {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.8rem;
+      background: #ffffff;
+      border: 1px solid var(--border);
+      color: var(--purple);
+      padding: 2px 7px;
+      border-radius: 6px;
+    }
+    .formula-box {
+      font-family: 'JetBrains Mono', monospace;
+      background: #ffffff;
+      border: 1.5px solid rgba(124, 58, 237, 0.3);
+      border-radius: 14px;
+      padding: 14px 18px;
+      font-size: 0.92rem;
+      font-weight: 700;
+      color: var(--text-main);
+      margin: 10px 0;
+      text-align: center;
+    }
+
+    .slide-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-top: 18px;
+      margin-top: 22px;
+      border-top: 1px solid var(--border);
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    /* Single-Slide Presentation Mode */
+    body.present-mode .deck-wrapper {
+      height: 100vh;
+      padding: 70px 32px 24px;
+      justify-content: center;
+    }
+    body.present-mode .slide {
+      display: none;
+      height: calc(100vh - 104px);
+    }
+    body.present-mode .slide.active-slide {
+      display: flex;
+    }
+
+    @media print {
+      .deck-toolbar { display: none !important; }
+      body { background: #ffffff; }
+      .deck-wrapper { padding: 0; gap: 0; max-width: 100%; }
+      .slide {
+        page-break-after: always;
+        break-after: page;
+        box-shadow: none;
+        border: 1.5px solid #cbd5e1;
+        min-height: 94vh;
+        margin-bottom: 0;
+      }
+    }
+  </style>
+</head>
+<body class="present-mode">
+
+  <!-- Floating Presentation Toolbar -->
+  <div class="deck-toolbar">
+    <div class="brand">
+      <img src="/static/logo.svg" alt="QG" />
+      <span>Quantum Guard · Team VICIOUS</span>
+    </div>
+    <button class="deck-btn" onclick="prevSlide()">&#8592; Prev</button>
+    <span class="slide-counter" id="slide-indicator">1 / 6</span>
+    <button class="deck-btn" onclick="nextSlide()">Next &#8594;</button>
+    <button class="deck-btn" onclick="toggleMode()" id="btn-mode">Show All 6 Slides</button>
+    <a class="deck-btn" href="/static/Quantum_Guard_VICIOUS_Pitch_Deck.pptx" download>Download .PPTX</a>
+    <button class="deck-btn primary" onclick="window.print()">Save as PDF</button>
+  </div>
+
+  <div class="deck-wrapper">
+
+    <!-- ==================== SLIDE 1: TITLE & VISION ==================== -->
+    <section class="slide active-slide" data-slide="1">
+      <div>
+        <div class="slide-top">
+          <span class="slide-pill">Slide 01 / 06 · Aarambh Hackathon — Quantum Computing</span>
+          <span class="team-tag">Team <b>VICIOUS</b> · Dhruvam &amp; Veer</span>
+        </div>
+
+        <div style="display:flex;align-items:center;gap:20px;margin:18px 0 14px;">
+          <img src="/static/logo.svg" alt="Quantum Guard Logo" style="width:76px;height:76px;border-radius:18px;box-shadow:0 14px 32px rgba(124,58,237,0.28);" />
+          <div>
+            <div style="font-size:0.85rem;font-weight:800;color:var(--purple);text-transform:uppercase;letter-spacing:0.1em;">NIST FIPS 203 · FIPS 204 · FIPS 205 · NIST IR 8547</div>
+            <h1 class="slide-title" style="font-size:2.75rem;margin-bottom:4px;">
+              Quantum Guard <span class="gradient-text">Enterprise PQC Platform</span>
+            </h1>
+          </div>
+        </div>
+
+        <p class="slide-sub" style="font-size:1.15rem;max-width:980px;">
+          Autonomous Post-Quantum Cryptographic Discovery, Mosca Risk Prioritization, Hybrid Key Exchange Combiner, and Zero-Downtime Live Migration — powered by a real <b>OpenSSL 3.5.6 C-Engine</b>.
+        </p>
+
+        <div class="grid-3" style="margin-top:26px;">
+          <div class="p-card highlight">
+            <div style="font-size:0.75rem;font-weight:800;color:var(--purple);text-transform:uppercase;">Cryptographic Engine</div>
+            <h3>Native OpenSSL 3.5.6</h3>
+            <p>Real execution of <code>ML-KEM-768</code> (FIPS 203), <code>ML-DSA-65/87</code> (FIPS 204), and <code>SLH-DSA-128s</code> (FIPS 205) — zero simulated or mocked primitives.</p>
+          </div>
+          <div class="p-card highlight">
+            <div style="font-size:0.75rem;font-weight:800;color:var(--blue);text-transform:uppercase;">Discovery &amp; Standard CBOM</div>
+            <h3>4-Scanner CycloneDX 1.6</h3>
+            <p>Probes live TLS endpoints, X.509 certificates, server configs, and Python AST source code to export a standard Cryptographic Bill of Materials.</p>
+          </div>
+          <div class="p-card highlight">
+            <div style="font-size:0.75rem;font-weight:800;color:var(--green);text-transform:uppercase;">Zero-Downtime Remediation</div>
+            <h3>0% &rarr; 100% Network Ready</h3>
+            <p>One-click 3-wave migration hot-swaps live TLS microservices to hybrid <code>X25519MLKEM768</code> and dual-certificate PKI without dropping legacy clients.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="slide-footer">
+        <span><b>Team VICIOUS:</b> Dhruvam Upadhyay &amp; Veer Bhanushali</span>
+        <span>Live Production App: <b>quantumguard-lab.veerbhanushali.in</b></span>
+      </div>
+    </section>
+
+    <!-- ==================== SLIDE 2: THE PROBLEM (HNDL & MOSCA) ==================== -->
+    <section class="slide" data-slide="2">
+      <div>
+        <div class="slide-top">
+          <span class="slide-pill">Slide 02 / 06 · The Threat Landscape</span>
+          <span class="team-tag">Team <b>VICIOUS</b> · Dhruvam &amp; Veer</span>
+        </div>
+
+        <h2 class="slide-title">Why Waiting Until 2030 Fails: <span class="gradient-text">"Harvest Now, Decrypt Later"</span></h2>
+        <p class="slide-sub">
+          Adversaries are intercepting and storing encrypted TLS 1.2/1.3 traffic <b>today</b>. Once a Cryptographically Relevant Quantum Computer (CRQC) arrives, Shor's algorithm breaks RSA-2048, ECDHE, and ECDSA retroactively.
+        </p>
+
+        <div class="grid-2">
+          <div class="p-card danger">
+            <div style="font-size:0.75rem;font-weight:800;color:var(--red);text-transform:uppercase;">Mosca's Theorem (Inequality of Urgency)</div>
+            <h3>When Data Secrecy Outlives Classical Crypto</h3>
+            <div class="formula-box">
+              Shelf-Life (X = 10y) + Migration Time (Y = 4y) &gt; Quantum Horizon (Z = 8y)
+            </div>
+            <ul>
+              <li><b>10 + 4 = 14 years required</b> vs. <b>8 years until CRQC</b> &rarr; <b>6 years of active HNDL breach exposure today</b>.</li>
+              <li><b>NIST IR 8547 Mandate:</b> Classical RSA/ECDSA/ECDH deprecated in <b>2030</b> and disallowed in <b>2035</b>.</li>
+            </ul>
+          </div>
+
+          <div class="p-card">
+            <div style="font-size:0.75rem;font-weight:800;color:var(--purple);text-transform:uppercase;">Why Enterprises Are Stuck Today</div>
+            <h3>3 Critical Bottlenecks We Solve</h3>
+            <ul>
+              <li><b>1. Cryptographic Shadow IT:</b> Classical keys are hidden across live ports, PEM certificates, Nginx configs, and hardcoded source files.</li>
+              <li><b>2. Alert Fatigue Without Prioritization:</b> Security teams don't know whether to fix Key Exchange (confidentiality) or Signatures (auth) first.</li>
+              <li><b>3. Fear of Breaking Legacy Clients:</b> Switching straight to pure PQC breaks existing browsers and API consumers.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="slide-footer">
+        <span>Team VICIOUS · Dhruvam &amp; Veer</span>
+        <span>Problem: Harvest-Now-Decrypt-Later (HNDL) &amp; Mosca's Inequality</span>
+      </div>
+    </section>
+
+    <!-- ==================== SLIDE 3: THE SOLUTION (4-STAGE PIPELINE) ==================== -->
+    <section class="slide" data-slide="3">
+      <div>
+        <div class="slide-top">
+          <span class="slide-pill">Slide 03 / 06 · Autonomous Solution Architecture</span>
+          <span class="team-tag">Team <b>VICIOUS</b> · Dhruvam &amp; Veer</span>
+        </div>
+
+        <h2 class="slide-title">Quantum Guard: <span class="gradient-text">End-to-End Autonomous PQC Pipeline</span></h2>
+        <p class="slide-sub">
+          From a frictionless Public Domain Scanner to a full RBAC Enterprise Command Center that discovers, prioritizes, and auto-remediates vulnerable cryptography.
+        </p>
+
+        <div class="grid-4">
+          <div class="p-card highlight">
+            <div style="font-size:0.74rem;font-weight:800;color:var(--purple);">STAGE 01 · DISCOVER</div>
+            <h3>4-Scanner Engine &amp; CBOM</h3>
+            <ul>
+              <li><b>Active TLS Prober:</b> Live handshake testing with <code>X25519MLKEM768</code>.</li>
+              <li><b>Python AST Scanner:</b> Detects hardcoded <code>RSA</code>, <code>SECP256R1</code>, <code>MD5/SHA1</code>.</li>
+              <li><b>Cert &amp; Config Parser:</b> Exports <b>CycloneDX 1.6 CBOM</b>.</li>
+            </ul>
+          </div>
+
+          <div class="p-card highlight">
+            <div style="font-size:0.74rem;font-weight:800;color:var(--blue);">STAGE 02 · PRIORITIZE</div>
+            <h3>Mosca Risk &amp; Q-Day Engine</h3>
+            <ul>
+              <li>Scores every asset <code>0–100</code> based on primitive strength &amp; HNDL exposure.</li>
+              <li>Interactive <b>Q-Day Horizon Simulator</b> models impact of earlier CRQC arrival.</li>
+            </ul>
+          </div>
+
+          <div class="p-card highlight">
+            <div style="font-size:0.74rem;font-weight:800;color:var(--purple);">STAGE 03 · PLAN</div>
+            <h3>3-Wave Upgrade Roadmap</h3>
+            <ul>
+              <li><b>Wave 1:</b> HNDL Key Exchange &rarr; <code>X25519MLKEM768</code>.</li>
+              <li><b>Wave 2:</b> PKI Leaf Certs &rarr; <code>ML-DSA-65/87</code>.</li>
+              <li><b>Wave 3:</b> Root CA &rarr; <code>SLH-DSA-128s</code> &amp; Code fixes.</li>
+            </ul>
+          </div>
+
+          <div class="p-card success">
+            <div style="font-size:0.74rem;font-weight:800;color:var(--green);">STAGE 04 · REMEDIATE</div>
+            <h3>Live Hot-Swap &amp; Verification</h3>
+            <ul>
+              <li>Reconfigures live TLS servers (`9443–9446`) and rotates certificates automatically.</li>
+              <li>Runs post-migration verification scan &amp; prints <b>Executive PDF Report</b>.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="slide-footer">
+        <span>Team VICIOUS · Dhruvam &amp; Veer</span>
+        <span>4-Stage Autonomous Discovery &rarr; Mosca Risk &rarr; 3-Wave Plan &rarr; Live Remediation</span>
+      </div>
+    </section>
+
+    <!-- ==================== SLIDE 4: DEEP CRYPTOGRAPHY (HYBRID + PKI + VAULT) ==================== -->
+    <section class="slide" data-slide="4">
+      <div>
+        <div class="slide-top">
+          <span class="slide-pill">Slide 04 / 06 · Deep Cryptographic Engineering</span>
+          <span class="team-tag">Team <b>VICIOUS</b> · Dhruvam &amp; Veer</span>
+        </div>
+
+        <h2 class="slide-title">Hybrid KEM Combiner, <span class="gradient-text">3-Tier PQC PKI &amp; Key Vault</span></h2>
+        <p class="slide-sub">
+          How we achieve immediate Harvest-Now-Decrypt-Later protection while preserving 100% backwards compatibility with existing TLS clients.
+        </p>
+
+        <div class="grid-2">
+          <div class="p-card highlight">
+            <div style="font-size:0.75rem;font-weight:800;color:var(--purple);text-transform:uppercase;">NIST FIPS 203 Hybrid Key Encapsulation</div>
+            <h3>X25519 + ML-KEM-768 Combiner</h3>
+            <div class="formula-box" style="font-size:0.82rem;">
+              Key = HKDF-SHA256( SS_X25519 [32B] || SS_ML-KEM-768 [32B] ) &rarr; AES-256-GCM
+            </div>
+            <ul>
+              <li><b>Two-Way Security Proof:</b> Even if a quantum computer breaks <code>X25519</code> via Shor's algorithm, the attacker still faces the Module-LWE lattice problem of <code>ML-KEM-768</code>.</li>
+              <li><b>Tamper Verification:</b> Authenticated encryption with <code>AES-256-GCM</code> immediately detects 1-bit wire tampering.</li>
+            </ul>
+          </div>
+
+          <div class="p-card">
+            <div style="font-size:0.75rem;font-weight:800;color:var(--blue);text-transform:uppercase;">NIST FIPS 204 &amp; 205 PKI + AES-256-GCM Vault</div>
+            <h3>Dual-Certificate Serving &amp; Envelope Vault</h3>
+            <ul>
+              <li><b>3-Tier Certificate Authority:</b> Issues real X.509 certificates across Classical (<code>RSA-2048</code>), Lattice (<code>ML-DSA-65 / ML-DSA-87</code>), and Stateless Hash-Based (<code>SLH-DSA-128s</code>) CAs.</li>
+              <li><b>Dual-Cert Strategy:</b> Serves PQC certificates to modern peers and classical certs to legacy clients simultaneously.</li>
+              <li><b>Encrypted Key Vault:</b> Stores private keys encrypted at rest with <code>AES-256-GCM (.enc)</code>, policy-driven rotation, and immutable audit logs.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="slide-footer">
+        <span>Team VICIOUS · Dhruvam &amp; Veer</span>
+        <span>Cryptography: X25519 + ML-KEM-768 · ML-DSA-65/87 · SLH-DSA-128s · AES-256-GCM</span>
+      </div>
+    </section>
+
+    <!-- ==================== SLIDE 5: TECH STACK & CLOUD ARCHITECTURE ==================== -->
+    <section class="slide" data-slide="5">
+      <div>
+        <div class="slide-top">
+          <span class="slide-pill">Slide 05 / 06 · Production Tech Stack &amp; Hybrid Cloud</span>
+          <span class="team-tag">Team <b>VICIOUS</b> · Dhruvam &amp; Veer</span>
+        </div>
+
+        <h2 class="slide-title">Split-Plane Architecture: <span class="gradient-text">SaaS Control Plane + C-Engine Worker</span></h2>
+        <p class="slide-sub">
+          Built for global SaaS scalability on Vercel while executing real native C-level OpenSSL 3.5.6 post-quantum operations over a permanent Zero-Trust Tunnel.
+        </p>
+
+        <div class="grid-3">
+          <div class="p-card highlight">
+            <div style="font-size:0.74rem;font-weight:800;color:var(--purple);text-transform:uppercase;">1. Frontend &amp; SaaS Funnel</div>
+            <h3>Next.js 16 + Vercel</h3>
+            <ul>
+              <li><b>URL:</b> <code>quantumguard-lab.veerbhanushali.in</code></li>
+              <li><b>4-Stage Funnel:</b> Product Info &rarr; Public Lite Scanner &rarr; RBAC Login &rarr; 5-Tab Workspace.</li>
+              <li><b>Visuals:</b> Interactive 6-node SVG Agent Graph &amp; Chart.js telemetry.</li>
+            </ul>
+          </div>
+
+          <div class="p-card highlight">
+            <div style="font-size:0.74rem;font-weight:800;color:var(--blue);text-transform:uppercase;">2. Cloud Auth, DB &amp; Email</div>
+            <h3>Supabase + Resend</h3>
+            <ul>
+              <li><b>Supabase PostgreSQL:</b> Persists target scans, CBOMs, and RBAC accounts (<code>CISO</code>, <code>SecOps</code>, <code>PKI Admin</code>, <code>Auditor</code>).</li>
+              <li><b>Resend API:</b> Delivers formatted HTML/PDF Executive PQC Reports directly to stakeholders.</li>
+            </ul>
+          </div>
+
+          <div class="p-card highlight">
+            <div style="font-size:0.74rem;font-weight:800;color:var(--green);text-transform:uppercase;">3. Cryptographic Data Plane</div>
+            <h3>FastAPI + OpenSSL 3.5.6</h3>
+            <ul>
+              <li><b>Tunnel:</b> <code>quantumguard-backend.veerbhanushali.in</code> (Cloudflare Zero-Trust).</li>
+              <li><b>Runtime:</b> Python 3.11 + OpenSSL 3.5.6 CLI &amp; 4 live TLS microservices on ports <code>9443–9446</code>.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="slide-footer">
+        <span>Team VICIOUS · Dhruvam &amp; Veer</span>
+        <span>Stack: Next.js · FastAPI · OpenSSL 3.5.6 · Supabase · Resend · Cloudflare Tunnel</span>
+      </div>
+    </section>
+
+    <!-- ==================== SLIDE 6: BENCHMARKS & IMPACT ==================== -->
+    <section class="slide" data-slide="6">
+      <div>
+        <div class="slide-top">
+          <span class="slide-pill">Slide 06 / 06 · Empirical Benchmarks &amp; Measured Impact</span>
+          <span class="team-tag">Team <b>VICIOUS</b> · Dhruvam &amp; Veer</span>
+        </div>
+
+        <h2 class="slide-title">Empirical Performance &amp; <span class="gradient-text">Measurable Security Impact</span></h2>
+        <p class="slide-sub">
+          In-process <code>openssl speed</code> benchmarks prove that NIST Post-Quantum Cryptography is fast enough for production deployment today.
+        </p>
+
+        <div class="grid-4" style="margin-bottom:20px;">
+          <div class="p-card success">
+            <div style="font-size:0.72rem;font-weight:800;color:var(--green);text-transform:uppercase;">Network TLS Readiness</div>
+            <div class="stat-big" style="color:var(--green);">0% &rarr; 100%</div>
+            <p>Automated upgrade of all 4 live TLS endpoints in &lt;5 seconds.</p>
+          </div>
+          <div class="p-card highlight">
+            <div style="font-size:0.72rem;font-weight:800;color:var(--purple);text-transform:uppercase;">ML-KEM-768 Speed</div>
+            <div class="stat-big" style="color:var(--purple);">&lt; 0.08 ms</div>
+            <p>Sub-millisecond key encapsulation — faster CPU time than RSA-2048.</p>
+          </div>
+          <div class="p-card highlight">
+            <div style="font-size:0.72rem;font-weight:800;color:var(--blue);text-transform:uppercase;">Hybrid Wire Overhead</div>
+            <div class="stat-big" style="color:var(--blue);">1,120 B</div>
+            <p>32B X25519 + 1,088B ML-KEM-768 fits inside one TCP congestion window.</p>
+          </div>
+          <div class="p-card">
+            <div style="font-size:0.72rem;font-weight:800;color:var(--text-muted);text-transform:uppercase;">Automated Test Suite</div>
+            <div class="stat-big">40 / 40</div>
+            <p>End-to-end pytest verification across scanner, planner, PKI, vault &amp; SaaS.</p>
+          </div>
+        </div>
+
+        <div class="p-card highlight" style="display:flex;justify-content:space-between;align-items:center;">
+          <div>
+            <div style="font-size:0.75rem;font-weight:800;color:var(--purple);text-transform:uppercase;">Presented By Team VICIOUS</div>
+            <h3 style="font-size:1.3rem;margin:2px 0;">Dhruvam Upadhyay &amp; Veer Bhanushali</h3>
+            <p>Ready for Live Demonstration · <b>https://quantumguard-lab.veerbhanushali.in</b></p>
+          </div>
+          <a class="deck-btn primary" href="/" style="padding:12px 24px;font-size:0.9rem;">Launch Live Platform &rarr;</a>
+        </div>
+      </div>
+
+      <div class="slide-footer">
+        <span>Thank You Judges! · Team VICIOUS (Dhruvam &amp; Veer)</span>
+        <span>Quantum Guard — NIST FIPS 203 / 204 / 205 Autonomous PQC Platform</span>
+      </div>
+    </section>
+
+  </div>
+
+  <script>
+    let currentSlide = 1;
+    const totalSlides = 6;
+
+    function updateSlideView() {
+      document.querySelectorAll('.slide').forEach((el) => {
+        const idx = parseInt(el.getAttribute('data-slide'), 10);
+        el.classList.toggle('active-slide', idx === currentSlide);
+      });
+      document.getElementById('slide-indicator').textContent = currentSlide + ' / ' + totalSlides;
+    }
+
+    function nextSlide() {
+      if (currentSlide < totalSlides) {
+        currentSlide++;
+        updateSlideView();
+      }
+    }
+
+    function prevSlide() {
+      if (currentSlide > 1) {
+        currentSlide--;
+        updateSlideView();
+      }
+    }
+
+    function toggleMode() {
+      document.body.classList.toggle('present-mode');
+      const isPresent = document.body.classList.contains('present-mode');
+      document.getElementById('btn-mode').textContent = isPresent ? 'Show All 6 Slides' : 'Single Slide Mode';
+    }
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight' || e.key === ' ') {
+        e.preventDefault();
+        nextSlide();
+      } else if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        prevSlide();
+      }
+    });
+  </script>
+</body>
+</html>
