@@ -505,6 +505,7 @@ async function handleRequest(req: NextRequest, { params }: { params: { path: str
 
   // Resend Webhook Receiver (email.sent, email.delivered, email.opened, email.clicked, email.bounced)
   if (subPath === "webhooks/resend") {
+    const whSecret = process.env.RESEND_WEBHOOK_SECRET || "";
     if (req.method === "GET") {
       const recent = await supabaseRest(
         "GET",
@@ -514,6 +515,7 @@ async function handleRequest(req: NextRequest, { params }: { params: { path: str
       );
       return NextResponse.json({
         webhook_active: true,
+        webhook_secret_configured: Boolean(whSecret.startsWith("whsec_")),
         endpoint: `https://${cfg.domain}/api/webhooks/resend`,
         link_tracker_domain: `rsend.${cfg.domain}`,
         send_domain: `send.${cfg.domain}`,
@@ -521,7 +523,28 @@ async function handleRequest(req: NextRequest, { params }: { params: { path: str
       });
     }
     if (req.method === "POST") {
-      const payload = await req.json().catch(() => ({}));
+      const rawBody = await req.text();
+      let sigVerified = false;
+      const svixId = req.headers.get("svix-id") || "";
+      const svixTimestamp = req.headers.get("svix-timestamp") || "";
+      const svixSignature = req.headers.get("svix-signature") || "";
+      if (whSecret.startsWith("whsec_") && svixId && svixTimestamp && svixSignature) {
+        try {
+          const cryptoMod = await import("node:crypto");
+          const secretBytes = Buffer.from(whSecret.slice("whsec_".length), "base64");
+          const signedContent = `${svixId}.${svixTimestamp}.${rawBody}`;
+          const expectedSig = cryptoMod.createHmac("sha256", secretBytes).update(signedContent).digest("base64");
+          sigVerified = svixSignature.includes(expectedSig);
+        } catch {
+          sigVerified = false;
+        }
+      }
+      let payload: any = {};
+      try {
+        payload = JSON.parse(rawBody || "{}");
+      } catch {
+        payload = {};
+      }
       const evtType = String(payload.type || "email.event")
         .toUpperCase()
         .replace(/[^A-Z0-9_]/g, "_");
@@ -529,8 +552,8 @@ async function handleRequest(req: NextRequest, { params }: { params: { path: str
       const toEmail = Array.isArray(data.to) ? data.to[0] : String(data.to || "recipient");
       const clickedLink = data.click?.link || data.link || "";
       const detail = clickedLink
-        ? `Clicked tracked link: ${clickedLink} (IP: ${data.click?.ipAddress || "n/a"})`
-        : `Resend event ${payload.type || "unknown"} for subject "${data.subject || "PQC Report"}" (email_id=${data.email_id || "n/a"})`;
+        ? `[Verified=${sigVerified}] Clicked tracked link: ${clickedLink} (IP: ${data.click?.ipAddress || "n/a"})`
+        : `[Verified=${sigVerified}] Resend event ${payload.type || "unknown"} for subject "${data.subject || "PQC Report"}" (email_id=${data.email_id || "n/a"})`;
 
       memState.auditLogs.unshift({
         id: Date.now(),
@@ -546,7 +569,12 @@ async function handleRequest(req: NextRequest, { params }: { params: { path: str
         target: clickedLink || String(data.email_id || cfg.domain),
         detail,
       });
-      return NextResponse.json({ received: true, event: payload.type, tracked_in_supabase: true });
+      return NextResponse.json({
+        received: true,
+        signature_verified: sigVerified,
+        event: payload.type,
+        tracked_in_supabase: true,
+      });
     }
   }
 

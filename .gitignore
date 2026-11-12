@@ -16,3 +16,6 @@ web/.env.local
 !web/.env.example
 next-env.d.ts
 web/next-env.d.ts
+cloudflared.exe
+*.pem
+*.json.tunnel
