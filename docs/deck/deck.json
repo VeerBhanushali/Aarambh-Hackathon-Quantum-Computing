@@ -3,11 +3,11 @@
   "createdOnFiles": {"v": 1, "at": "2026-11-11T20:10:00Z"},
   "lists": "css",
   "title": "Quantum Guard — PS07 Pitch Deck",
-  "order": ["problem", "architecture", "discovery", "risk", "migration", "hybrid-pki", "benchmarks", "limits"],
+  "order": ["problem", "architecture", "discovery", "risk", "migration", "hybrid-pki", "standout", "benchmarks", "limits"],
   "sections": {
     "s1": {"description": "The threat: harvest now, decrypt later, and the NIST IR 8547 deadlines.", "start": "problem"},
     "s2": {"description": "How Quantum Guard finds, scores and fixes quantum-vulnerable cryptography.", "start": "architecture"},
-    "s3": {"description": "Proof: hybrid encryption, PKI migration and measured performance.", "start": "hybrid-pki"},
+    "s3": {"description": "Proof: hybrid encryption, PKI migration, the live internet scan, Q-Day replay and measured performance.", "start": "hybrid-pki"},
     "s4": {"description": "What is simulated, what is assumed, and what comes next.", "start": "limits"}
   },
   "faces": {

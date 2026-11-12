@@ -15,7 +15,7 @@ bugs you hit while doing them, and do not add features.
 | Degraded mode (OpenSSL 3.0) | No crashes; clear errors + yellow banner; PQC tests skip |
 | Docker image | Base `python:3.11-alpine3.22` ships OpenSSL **3.5.9** — **not yet run** (no Docker in the dev environment) |
 | liboqs-python path | Optional; **untested**. App uses OpenSSL 3.5 for all PQC, which is enough |
-| 8-slide deck | Drafted with this environment's numbers — **slide 7 must be re-measured** (task 3) |
+| 9-slide deck | Drafted with this environment's numbers — **slide 8 (benchmarks) must be re-measured** (task 3) |
 
 Measured results to expect from the guided demo (if yours differ a lot, investigate before presenting):
 
@@ -76,7 +76,7 @@ Benchmark numbers must come from the machine we present on.
 
 1. Benchmarks tab → N = 200 → **Run Live Benchmarks** (takes ~1 minute). Do not use the laptop for anything else meanwhile; plug it in.
 2. Click **Export CSV** and commit it as `docs/benchmarks-<laptop>.csv`.
-3. Open the deck → slide 7. Replace the six table rows and the footer machine line with your numbers.
+3. Open the deck → slide 8 (benchmarks). Replace the six table rows and the footer machine line with your numbers.
    The **Key takeaways** box on the Benchmarks tab already words the comparisons ("9.8x faster", "2.5x slower") for you.
 4. If discovery/readiness counts differ from §1, update slides 3, 4 and 5 too.
 
@@ -95,13 +95,14 @@ Script (5:00 total). Speaker notes in each slide hold the full wording.
 | Time | Do | Say |
 |---|---|---|
 | 0:30 | Slide 1 | Harvest now, decrypt later; 2030 deprecated, 2035 disallowed |
-| 0:45 | Discovery tab: start enterprise, run scan, download CBOM | 3 scanners, 46 assets, CycloneDX CBOM |
+| 0:30 | Discovery tab: start enterprise, run scan, download CBOM | 3 scanners, 46 assets, CycloneDX CBOM |
 | 0:45 | Risk tab: point at hr-records HNDL badge; move years-to-quantum slider | Mosca: 25 + 3 > 10 |
-| 0:45 | Migration tab: plan → Apply → rescan | network 33% → 87%; rest is code, on purpose |
-| 0:45 | Hybrid Lab: encrypt; tick Tamper; run 3 policy tests | secure if either algorithm holds |
+| 0:30 | Migration tab: plan → Apply → rescan | network 33% → 87%; rest is code, on purpose |
+| 0:30 | Hybrid Lab: encrypt; tick Tamper; run 3 policy tests | secure if either algorithm holds |
+| 0:45 | Slide 7, then **Live Internet Scan** (a judge's bank) + **Q-Day replay** | the two things no other team has |
 | 0:30 | PKI tab: dual-certificate demo | old client ECDSA, new client ML-DSA |
 | 0:30 | Benchmarks: one chart, one takeaway, machine specs | key exchange faster; cost is bytes |
-| 0:30 | Slide 8 | vetted libraries, nothing hand-rolled, all measured live |
+| 0:30 | Slide 9 | vetted libraries, nothing hand-rolled, all measured live |
 
 Before each rehearsal: **Reset Demo**. Keep a terminal with the server open in case it needs a restart.
 

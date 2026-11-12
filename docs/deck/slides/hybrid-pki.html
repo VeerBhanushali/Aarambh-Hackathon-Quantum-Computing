@@ -36,6 +36,6 @@
 </div>
 </div>
 </div>
-<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#3E4A5C">All results from live openssl s_server / s_client runs · 6 / 8</p>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#3E4A5C">All results from live openssl s_server / s_client runs · 6 / 9</p>
 <aside>(0:45 Hybrid lab + 0:30 PKI) Encrypt a message: the sender does an X25519 exchange and an ML-KEM-768 encapsulation, and both secrets go through HKDF-SHA256 with the public values bound into the context, then AES-256-GCM. An attacker who records this must break X25519 and ML-KEM to read it. Tick Tamper to show the GCM tag rejecting a changed ciphertext. Then run the three policy tests. For PKI, run the dual-certificate demo: the same server hands an old client an ECDSA certificate and a new client an ML-DSA-65 certificate. NIST has said the 2035 disallowance was not meant to apply to hybrids that pair an approved PQC algorithm with a classical one, which is why hybrid is our default.</aside>
 </section>
