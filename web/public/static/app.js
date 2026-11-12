@@ -1403,6 +1403,124 @@ function authHeaders() {
   return h;
 }
 
+function switchSaaSStage(stage, authTab = "login") {
+  // Enforce authentication before granting access to the full 5-Tab Enterprise Workspace
+  if (stage === "workspace" && !currentUser) {
+    showToast("Please Sign In or Create a Free Account to access the Full Enterprise Dashboard.", true);
+    stage = "auth";
+  }
+  const map = {
+    marketing: "stage-marketing",
+    lite: "stage-lite",
+    auth: "stage-auth",
+    workspace: "stage-workspace",
+  };
+  Object.values(map).forEach((id) => {
+    const el = document.getElementById(id);
+    if (el) el.classList.remove("active-stage");
+  });
+  const targetEl = document.getElementById(map[stage] || "stage-marketing");
+  if (targetEl) targetEl.classList.add("active-stage");
+
+  if (stage === "auth") {
+    switchAuthTab(authTab);
+  }
+  if (stage === "workspace" && latestTargetScan) {
+    const wsInput = document.getElementById("saas-target-input");
+    if (wsInput) wsInput.value = latestTargetScan.host || "";
+    renderSaaSTargetResult(latestTargetScan);
+  }
+}
+
+function startDomainCheckFromMarketing() {
+  const mktInput = document.getElementById("mkt-domain-input");
+  const val = (mktInput ? mktInput.value : "").trim();
+  switchSaaSStage("lite");
+  const liteInput = document.getElementById("lite-domain-input");
+  if (liteInput && val) {
+    liteInput.value = val;
+    runLiteDomainScan();
+  } else if (liteInput) {
+    liteInput.focus();
+  }
+}
+
+function quickFillLite(domain) {
+  const liteInput = document.getElementById("lite-domain-input");
+  if (liteInput) {
+    liteInput.value = domain;
+    runLiteDomainScan();
+  }
+}
+
+async function runLiteDomainScan() {
+  const liteInput = document.getElementById("lite-domain-input");
+  const rawTarget = (liteInput ? liteInput.value : "").trim();
+  if (!rawTarget) {
+    showToast("Enter a domain name to scan (e.g. cloudflare.com, google.com, veerbhanushali.in).", true);
+    if (liteInput) liteInput.focus();
+    return;
+  }
+  const btn = document.getElementById("btn-lite-scan");
+  const box = document.getElementById("lite-scan-result-box");
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = "Probing TLS 1.3 & PQC...";
+  }
+  if (box) {
+    box.style.display = "block";
+    box.innerHTML = `<div style="padding:14px; border:1.5px solid var(--purple); border-radius:12px; background:#fff; font-weight:700; color:var(--purple);">&#8987; Probing <code>${escapeHtml(rawTarget)}:443</code> with hybrid X25519MLKEM768 &amp; classical TLS handshakes...</div>`;
+  }
+  try {
+    const raw = await fetch("/api/saas/scan-target", {
+      method: "POST",
+      headers: authHeaders(),
+      body: JSON.stringify({ target: rawTarget }),
+    });
+    const res = await raw.json();
+    if (!raw.ok || res.error) throw new Error(res.message || "Scan failed");
+    latestTargetScan = res;
+    const isPqc = res.kex_status === "hybrid";
+    const kex = (res.pqc_probe && res.pqc_probe.negotiated_group) || "unknown";
+    const certAlg = (res.certificate && res.certificate.signature_algorithm) || "unknown";
+    if (box) {
+      box.innerHTML = `
+        <div style="padding:18px; border:2px solid ${isPqc ? "var(--green)" : "var(--red)"}; border-radius:16px; background:#ffffff; box-shadow:0 10px 26px rgba(15,23,42,0.06);">
+          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+            <div>
+              <span class="badge ${isPqc ? "sev-ok" : "sev-critical"}">${escapeHtml(res.verdict)}</span>
+              <h3 style="margin:6px 0 2px; font-size:1.15rem;">Target: <code>${escapeHtml(res.host)}</code></h3>
+            </div>
+            <div style="text-align:right;">
+              <div style="font-size:0.72rem; text-transform:uppercase; color:var(--text-muted); font-weight:800;">Quantum Readiness Score</div>
+              <div style="font-size:1.85rem; font-weight:900; color:${isPqc ? "var(--green)" : "var(--red)"};">${res.readiness_score}%</div>
+            </div>
+          </div>
+          <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:10px; margin-top:12px; font-size:0.82rem;">
+            <div style="padding:10px; border:1px solid #e2e8f0; border-radius:10px;"><b>Negotiated KEM Group:</b><br/><code>${escapeHtml(kex)}</code></div>
+            <div style="padding:10px; border:1px solid #e2e8f0; border-radius:10px;"><b>Leaf Certificate Sig:</b><br/><code>${escapeHtml(certAlg)}</code></div>
+            <div style="padding:10px; border:1px solid #e2e8f0; border-radius:10px;"><b>TLS 1.2 Fallback:</b><br/><b>${res.tls12_accepted ? "Accepted (Legacy Risk)" : "Disabled (Strict TLS 1.3)"}</b></div>
+          </div>
+          <div style="margin-top:12px; padding:10px 12px; background:#f8fafc; border-radius:10px; font-size:0.79rem; color:var(--text-secondary);">
+            <b>&#128274; Deep Remediation &amp; Full Enterprise Dashboard Locked:</b> Sign in below to unlock the 3-Wave OpenSSL/Nginx migration configs for <b>${escapeHtml(res.host)}</b>, download the PDF/CBOM report, email it via Resend, and access all 5 Enterprise Workspace tabs.
+          </div>
+        </div>
+      `;
+    }
+    showToast(`Domain check complete for ${res.host} (${res.readiness_score}% Ready). Sign in for full details!`);
+  } catch (err) {
+    if (box) {
+      box.innerHTML = `<div style="padding:14px; border:1.5px solid var(--red); border-radius:12px; color:var(--red); font-weight:700;">Scan Error: ${escapeHtml(err.message)}</div>`;
+    }
+    showToast(err.message, true);
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = "&#127760; Scan Domain Now";
+    }
+  }
+}
+
 async function loadSaaSStatus() {
   try {
     const res = await fetch("/api/saas/status", { headers: authHeaders() }).then((r) => r.json());
@@ -1413,8 +1531,10 @@ async function loadSaaSStatus() {
     }
     if (res.authenticated && res.user) {
       currentUser = res.user;
+      switchSaaSStage("workspace");
     } else {
       currentUser = null;
+      switchSaaSStage("marketing");
     }
     renderAuthTopBar();
   } catch (e) {}
@@ -1425,6 +1545,7 @@ function renderAuthTopBar() {
   if (!area) return;
   if (currentUser) {
     area.innerHTML = `
+      <button class="btn btn-outline btn-sm" onclick="switchSaaSStage('marketing')">Marketing Page</button>
       <span class="badge sev-medium" title="${escapeHtml(currentUser.organization)}">${escapeHtml(currentUser.role_label)}</span>
       <span style="font-size:0.76rem; font-weight:700; color:var(--text-main);">${escapeHtml(currentUser.full_name || currentUser.email)}</span>
       <button class="btn btn-outline btn-sm" onclick="logoutSaaS()">Sign Out</button>
@@ -1439,21 +1560,19 @@ function renderAuthTopBar() {
 
 function openAuthModal(tab = "login", reasonMsg = null, afterCallback = null) {
   pendingPostAuthAction = afterCallback;
-  const modal = document.getElementById("auth-modal");
-  if (!modal) return;
   const reasonEl = document.getElementById("auth-modal-reason");
-  if (reasonEl) {
-    reasonEl.textContent =
-      reasonMsg ||
-      "Sign in or create a free account to unlock full Executive PDF Reports & Resend email delivery.";
+  if (reasonEl && reasonMsg) {
+    reasonEl.textContent = reasonMsg;
   }
-  modal.style.display = "flex";
-  switchAuthTab(tab);
+  switchSaaSStage("auth", tab);
 }
 
 function closeAuthModal() {
-  const modal = document.getElementById("auth-modal");
-  if (modal) modal.style.display = "none";
+  if (currentUser) {
+    switchSaaSStage("workspace");
+  } else {
+    switchSaaSStage("lite");
+  }
 }
 
 function switchAuthTab(tab) {
@@ -1477,9 +1596,9 @@ async function submitLogin() {
     authToken = res.token;
     currentUser = res.user;
     localStorage.setItem("qg_auth_token", authToken);
-    closeAuthModal();
     renderAuthTopBar();
-    showToast(`Welcome back, ${currentUser.full_name} (${currentUser.role_label})!`);
+    switchSaaSStage("workspace");
+    showToast(`Welcome back, ${currentUser.full_name} (${currentUser.role_label})! Full Enterprise Workspace unlocked.`);
     if (pendingPostAuthAction) {
       const fn = pendingPostAuthAction;
       pendingPostAuthAction = null;
@@ -1507,9 +1626,9 @@ async function submitRegister() {
     authToken = res.token;
     currentUser = res.user;
     localStorage.setItem("qg_auth_token", authToken);
-    closeAuthModal();
     renderAuthTopBar();
-    showToast(`Account created in Supabase as ${currentUser.role_label}!`);
+    switchSaaSStage("workspace");
+    showToast(`Account created in Supabase as ${currentUser.role_label}! Full Enterprise Workspace unlocked.`);
     if (pendingPostAuthAction) {
       const fn = pendingPostAuthAction;
       pendingPostAuthAction = null;
@@ -1525,7 +1644,8 @@ function logoutSaaS() {
   currentUser = null;
   localStorage.removeItem("qg_auth_token");
   renderAuthTopBar();
-  showToast("Signed out of Quantum Guard SaaS.");
+  switchSaaSStage("marketing");
+  showToast("Signed out — returned to Quantum Guard Marketing Page.");
 }
 
 async function runSaaSTargetScan() {

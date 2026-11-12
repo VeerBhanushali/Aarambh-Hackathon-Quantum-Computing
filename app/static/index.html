@@ -4,21 +4,325 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Quantum Guard — Post-Quantum Cryptography Assessment &amp; Migration Platform</title>
-  <link rel="stylesheet" href="/static/style.css?v=9" />
+  <link rel="stylesheet" href="/static/style.css?v=12" />
   <style>
     .tab-section { display: none !important; }
     .tab-section.active { display: block !important; }
     .sub-pane { display: none !important; }
     .sub-pane.active { display: block !important; }
+    .saas-stage { display: none !important; }
+    .saas-stage.active-stage { display: block !important; }
+    .app-layout.saas-stage.active-stage { display: flex !important; }
+    .mkt-shell { height: 100vh; overflow-y: auto; scroll-behavior: smooth; padding: 24px 32px 60px; max-width: 1280px; margin: 0 auto; }
+    .mkt-nav { display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.88); backdrop-filter: blur(16px); border: 1.5px solid #e2e8f0; border-radius: 16px; padding: 12px 22px; position: sticky; top: 0; z-index: 100; box-shadow: 0 8px 24px rgba(15,23,42,0.05); }
+    .mkt-hero { text-align: center; padding: 44px 24px 36px; background: rgba(255,255,255,0.86); border: 1.5px solid #e2e8f0; border-radius: 24px; margin-top: 22px; box-shadow: 0 18px 44px rgba(15,23,42,0.06); position: relative; overflow: hidden; }
+    .mkt-grid-4 { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; margin-top: 22px; }
+    .mkt-card { background: #ffffff; border: 1.5px solid #e2e8f0; border-radius: 18px; padding: 20px; transition: all 0.2s ease; box-shadow: 0 6px 18px rgba(15,23,42,0.04); }
+    .mkt-card:hover { transform: translateY(-3px); border-color: var(--purple); box-shadow: 0 14px 30px rgba(124,58,237,0.1); }
+    .locked-gate-box { background: linear-gradient(180deg, rgba(255,255,255,0.92), #f8fafc); border: 2px dashed var(--purple); border-radius: 18px; padding: 24px; margin-top: 18px; text-align: center; }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
 </head>
 <body>
-  <div class="app-layout">
+
+  <!-- ==================== STAGE 1: MARKETING & PRODUCT INFO PAGE ==================== -->
+  <div id="stage-marketing" class="saas-stage active-stage">
+    <div class="mkt-shell">
+      <header class="mkt-nav">
+        <div class="brand" style="margin:0;">
+          <div class="brand-orb">QG</div>
+          <div>
+            <h1 style="margin:0; font-size:1.1rem;">Quantum Guard</h1>
+            <div class="brand-sub">quantumguard-lab.veerbhanushali.in · NIST FIPS 203 · 204 · 205</div>
+          </div>
+        </div>
+        <div style="display:flex; gap:18px; align-items:center; font-size:0.84rem; font-weight:700; color:var(--text-secondary);">
+          <a href="#mkt-features" style="color:inherit; text-decoration:none;">Architecture</a>
+          <a href="#mkt-roles" style="color:inherit; text-decoration:none;">Enterprise Roles</a>
+          <a href="#mkt-timeline" style="color:inherit; text-decoration:none;">NIST 2030 Mandate</a>
+        </div>
+        <div style="display:flex; gap:10px; align-items:center;">
+          <button class="btn btn-outline btn-sm" onclick="switchSaaSStage('auth', 'login')">&#128274; Sign In</button>
+          <button class="btn btn-purple btn-sm" onclick="switchSaaSStage('lite')">&#127760; Check Your Domain Free &rarr;</button>
+        </div>
+      </header>
+
+      <section class="mkt-hero">
+        <span class="badge sev-medium" style="margin-bottom:14px; font-size:0.75rem; padding:5px 14px;">
+          NIST FIPS 203 (ML-KEM) &middot; FIPS 204 (ML-DSA) &middot; FIPS 205 (SLH-DSA) &middot; OpenSSL 3.5+ Engine
+        </span>
+        <h2 style="font-size:2.35rem; font-weight:900; letter-spacing:-0.03em; color:var(--text-main); max-width:860px; margin:10px auto 14px; line-height:1.15;">
+          Defeat <span style="color:var(--purple);">Harvest-Now-Decrypt-Later</span> Before Q-Day Arrives.
+        </h2>
+        <p style="font-size:1.02rem; color:var(--text-secondary); max-width:760px; margin:0 auto 24px; line-height:1.6;">
+          Quantum Guard is an autonomous Post-Quantum Cryptography (PQC) Assessment, CycloneDX 1.6 CBOM, Mosca Shelf-Life Risk ($X + Y &gt; Z$), and 3-Wave Migration Platform built for modern enterprises.
+        </p>
+
+        <div style="display:flex; justify-content:center; gap:10px; flex-wrap:wrap; max-width:680px; margin:0 auto;">
+          <input
+            type="text"
+            id="mkt-domain-input"
+            placeholder="Enter domain to test (e.g. cloudflare.com, google.com, veerbhanushali.in)..."
+            style="flex:1; min-width:280px; padding:12px 16px; font-size:0.92rem; border:2px solid var(--purple); border-radius:12px;"
+            onkeydown="if(event.key==='Enter')startDomainCheckFromMarketing()"
+          />
+          <button class="btn btn-purple" style="padding:12px 22px; font-size:0.92rem;" onclick="startDomainCheckFromMarketing()">
+            &#127760; Launch Free Domain Check &rarr;
+          </button>
+        </div>
+        <div style="margin-top:12px; font-size:0.76rem; color:var(--text-muted);">
+          Step 1: Instant Public TLS 1.3 PQC Check &rarr; Step 2: Sign In to Unlock Full 3-Wave Remediation, PDF Report &amp; 5-Tab Enterprise Workspace
+        </div>
+      </section>
+
+      <!-- 4 Core Platform Pillars -->
+      <div id="mkt-features" class="mkt-grid-4">
+        <div class="mkt-card">
+          <span class="badge sev-medium">01 &middot; AUTONOMOUS AGENT DAG</span>
+          <h3 style="margin:10px 0 6px; font-size:1rem;">7-Node Execution Graph with Feedback Loop</h3>
+          <p style="font-size:0.82rem; color:var(--text-secondary); margin:0;">
+            Probes live TLS 1.3 endpoints, AST source code (17 rules), and X.509 chains. Self-healing Reflect Gate loops back automatically when classical RSA/ECC is detected.
+          </p>
+        </div>
+        <div class="mkt-card">
+          <span class="badge sev-critical">02 &middot; MOSCA HNDL ENGINE</span>
+          <h3 style="margin:10px 0 6px; font-size:1rem;">CycloneDX 1.6 CBOM &amp; $X + Y &gt; Z$ Scoring</h3>
+          <p style="font-size:0.82rem; color:var(--text-secondary); margin:0;">
+            Flags Harvest-Now-Decrypt-Later urgency when data secrecy shelf-life ($X$) plus migration duration ($Y$) exceeds the quantum computer horizon ($Z$).
+          </p>
+        </div>
+        <div class="mkt-card">
+          <span class="badge sev-ok">03 &middot; 3-WAVE AUTO-MIGRATION</span>
+          <h3 style="margin:10px 0 6px; font-size:1rem;">PQC PKI CAs, Dual-Certs &amp; AES-256-GCM Vault</h3>
+          <p style="font-size:0.82rem; color:var(--text-secondary); margin:0;">
+            Issues ML-DSA-87, ML-DSA-65, and SLH-DSA-128s certificates, serves dual Classical + PQC chains simultaneously, and encrypts private keys at rest (`.key.enc`).
+          </p>
+        </div>
+        <div class="mkt-card">
+          <span class="badge sev-low">04 &middot; EMPIRICAL PROOF LAB</span>
+          <h3 style="margin:10px 0 6px; font-size:1rem;">Hybrid Combiner, Q-Day Replay &amp; C-Benchmarks</h3>
+          <p style="font-size:0.82rem; color:var(--text-secondary); margin:0;">
+            Combines `X25519 + ML-KEM-768` via HKDF-SHA256, simulates Q-Day Shor key recovery, and benchmarks in-process `openssl speed` throughput.
+          </p>
+        </div>
+      </div>
+
+      <!-- Target Audience & RBAC + NIST IR 8547 Timeline -->
+      <div id="mkt-roles" class="grid-2" style="margin-top:20px;">
+        <div class="mkt-card">
+          <h3 style="margin:0 0 10px; font-size:1rem;">Built for Every Enterprise Security Role (Supabase RBAC)</h3>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; font-size:0.8rem;">
+            <div style="padding:10px; border:1px solid #e2e8f0; border-radius:10px;">
+              <b style="color:var(--purple);">CISO / Executive Viewer</b><br/>
+              <span style="color:var(--text-secondary);">Organization readiness KPIs, board PDF reports &amp; Resend email briefings.</span>
+            </div>
+            <div style="padding:10px; border:1px solid #e2e8f0; border-radius:10px;">
+              <b style="color:var(--blue);">SecOps / Discovery Analyst</b><br/>
+              <span style="color:var(--text-secondary);">Live TLS 1.3 scanning, AST code discovery &amp; CycloneDX 1.6 CBOM export.</span>
+            </div>
+            <div style="padding:10px; border:1px solid #e2e8f0; border-radius:10px;">
+              <b style="color:var(--green);">PKI &amp; Crypto Admin</b><br/>
+              <span style="color:var(--text-secondary);">1-click 3-Wave auto-migration, ML-DSA/SLH-DSA CA issuance &amp; Key Vault rotation.</span>
+            </div>
+            <div style="padding:10px; border:1px solid #e2e8f0; border-radius:10px;">
+              <b style="color:var(--red);">Compliance Auditor</b><br/>
+              <span style="color:var(--text-secondary);">NIST IR 8547 compliance verification &amp; immutable cryptographic audit logs.</span>
+            </div>
+          </div>
+        </div>
+
+        <div id="mkt-timeline" class="mkt-card" style="display:flex; flex-direction:column; justify-content:space-between;">
+          <div>
+            <h3 style="margin:0 0 10px; font-size:1rem;">NIST IR 8547 Mandate Timeline</h3>
+            <ul style="font-size:0.82rem; color:var(--text-secondary); padding-left:18px; margin:0; line-height:1.7;">
+              <li><b>Aug 2024:</b> NIST publishes final FIPS 203 (`ML-KEM`), FIPS 204 (`ML-DSA`), and FIPS 205 (`SLH-DSA`).</li>
+              <li><b style="color:var(--green);">2026 (Today):</b> Mandatory CBOM inventory &amp; Hybrid `X25519MLKEM768` rollout window to stop HNDL wiretapping.</li>
+              <li><b style="color:var(--purple);">2030:</b> Classical RSA-2048, ECDSA P-256, and X25519 **Deprecated**.</li>
+              <li><b style="color:var(--red);">2035:</b> Classical public-key cryptography **Disallowed** across federal &amp; regulated systems.</li>
+            </ul>
+          </div>
+          <div style="margin-top:14px; display:flex; gap:10px; justify-content:flex-end;">
+            <button class="btn btn-purple btn-sm" onclick="switchSaaSStage('lite')">Start Step 1: Check Your Domain &rarr;</button>
+            <button class="btn btn-outline btn-sm" onclick="switchSaaSStage('auth', 'register')">Create Enterprise Account</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== STAGE 2: SIMPLE DOMAIN CHECK DASHBOARD (NO FULL ACCESS YET) ==================== -->
+  <div id="stage-lite" class="saas-stage">
+    <div class="mkt-shell" style="max-width:1020px;">
+      <header class="mkt-nav">
+        <div class="brand" style="margin:0; cursor:pointer;" onclick="switchSaaSStage('marketing')">
+          <div class="brand-orb">QG</div>
+          <div>
+            <h1 style="margin:0; font-size:1.05rem;">Quantum Guard &mdash; Public Domain Scanner</h1>
+            <div class="brand-sub">Step 1 of 2: Free Live TLS 1.3 Post-Quantum Readiness Check</div>
+          </div>
+        </div>
+        <div style="display:flex; gap:8px;">
+          <button class="btn btn-outline btn-sm" onclick="switchSaaSStage('marketing')">&larr; Back to Product Info</button>
+          <button class="btn btn-purple btn-sm" onclick="switchSaaSStage('auth', 'login')">&#128274; Sign In for Full Enterprise Dashboard</button>
+        </div>
+      </header>
+
+      <div class="mkt-card" style="margin-top:20px; padding:26px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:12px;">
+          <div>
+            <span class="badge sev-ok">&#9679; LIVE PORT 443 PQC PROBE</span>
+            <h2 style="margin:6px 0 2px; font-size:1.35rem;">Check Any Public Website's Quantum Readiness</h2>
+            <p style="margin:0; font-size:0.84rem; color:var(--text-secondary);">
+              Enter your domain below to test live TLS 1.3 hybrid key exchange (`X25519MLKEM768`) and X.509 certificate posture.
+            </p>
+          </div>
+        </div>
+
+        <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:14px;">
+          <input
+            type="text"
+            id="lite-domain-input"
+            placeholder="e.g. cloudflare.com, google.com, veerbhanushali.in, github.com"
+            style="flex:1; min-width:260px; padding:11px 14px; font-size:0.92rem; border:2px solid var(--purple); border-radius:10px;"
+            onkeydown="if(event.key==='Enter')runLiteDomainScan()"
+          />
+          <button class="btn btn-purple" id="btn-lite-scan" onclick="runLiteDomainScan()" style="padding:11px 20px;">
+            &#127760; Scan Domain Now
+          </button>
+        </div>
+
+        <div style="margin-top:10px; display:flex; gap:6px; flex-wrap:wrap; align-items:center; font-size:0.76rem; color:var(--text-muted);">
+          <span>Quick test:</span>
+          <button class="btn btn-outline btn-sm" onclick="quickFillLite('cloudflare.com')">cloudflare.com</button>
+          <button class="btn btn-outline btn-sm" onclick="quickFillLite('google.com')">google.com</button>
+          <button class="btn btn-outline btn-sm" onclick="quickFillLite('pq.cloudflareresearch.com')">pq.cloudflareresearch.com</button>
+          <button class="btn btn-outline btn-sm" onclick="quickFillLite('github.com')">github.com</button>
+        </div>
+
+        <!-- Summary Teaser Output -->
+        <div id="lite-scan-result-box" style="margin-top:18px; display:none;"></div>
+
+        <!-- Locked Full Dashboard & Deep Details Gate -->
+        <div class="locked-gate-box" id="lite-locked-gate">
+          <span class="badge sev-medium" style="margin-bottom:8px;">&#128274; FULL ENTERPRISE WORKSPACE &amp; DEEP REPORT LOCKED</span>
+          <h3 style="margin:6px 0; font-size:1.12rem;">Want Full Remediation Details, PDF Report &amp; Complete 5-Tab Dashboard Access?</h3>
+          <p style="font-size:0.84rem; color:var(--text-secondary); max-width:680px; margin:0 auto 16px;">
+            Sign in or create a free enterprise account to unlock the **7-Node Live Agent Execution DAG**, **3-Wave Server Auto-Fix Configs**, **CycloneDX 1.6 CBOM**, **Dual-Certificate PKI &amp; AES-256-GCM Key Vault**, **Q-Day Shor Replay**, and **Resend Email Report Delivery**.
+          </p>
+          <div style="display:flex; justify-content:center; gap:10px; flex-wrap:wrap;">
+            <button class="btn btn-purple" style="padding:10px 22px;" onclick="switchSaaSStage('auth', 'login')">
+              &#128274; Sign In to Unlock Full Dashboard &rarr;
+            </button>
+            <button class="btn btn-green" style="padding:10px 22px;" onclick="switchSaaSStage('auth', 'register')">
+              &#10024; Create Free Account (RBAC)
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== STAGE 3: DEDICATED FULL-PAGE LOGIN / SIGN UP (SUPABASE RBAC) ==================== -->
+  <div id="stage-auth" class="saas-stage">
+    <div class="mkt-shell" style="max-width:960px; display:flex; flex-direction:column; justify-content:center;">
+      <header class="mkt-nav" style="margin-bottom:22px;">
+        <div class="brand" style="margin:0; cursor:pointer;" onclick="switchSaaSStage('marketing')">
+          <div class="brand-orb">QG</div>
+          <div>
+            <h1 style="margin:0; font-size:1.05rem;">Quantum Guard &mdash; Enterprise Authentication</h1>
+            <div class="brand-sub">Backed by Supabase Cloud PostgreSQL (`ap-south-1`) &amp; Resend Email</div>
+          </div>
+        </div>
+        <div style="display:flex; gap:8px;">
+          <button class="btn btn-outline btn-sm" onclick="switchSaaSStage('lite')">&larr; Back to Domain Check</button>
+          <button class="btn btn-outline btn-sm" onclick="switchSaaSStage('marketing')">Marketing Home</button>
+        </div>
+      </header>
+
+      <div class="grid-2" style="align-items:stretch;">
+        <div class="mkt-card" style="display:flex; flex-direction:column; justify-content:space-between;">
+          <div>
+            <span class="badge sev-ok">&#9679; SUPABASE CLOUD RBAC</span>
+            <h2 style="margin:10px 0 8px; font-size:1.4rem;">Unlock the Complete Post-Quantum Command Center</h2>
+            <p id="auth-modal-reason" style="font-size:0.85rem; color:var(--purple); font-weight:700; margin-bottom:14px;">
+              Sign in or register below to unlock full domain remediation details, Executive PDF/Email reports, and all 5 Enterprise Workspace tabs.
+            </p>
+            <ul style="font-size:0.82rem; color:var(--text-secondary); padding-left:18px; line-height:1.75;">
+              <li><b>Live 7-Node Agent Execution DAG</b> with self-healing Reflect Gate</li>
+              <li><b>3-Wave Migration Planner</b> &amp; 1-click live TLS service reconfiguration</li>
+              <li><b>Post-Quantum PKI CAs</b> (`ML-DSA-87`, `ML-DSA-65`, `SLH-DSA-128s`) &amp; Dual-Cert demo</li>
+              <li><b>AES-256-GCM Encrypted Key Vault</b> &amp; CycloneDX 1.6 CBOM export</li>
+              <li><b>Executive Report Delivery</b> via `reports@quantumguard-lab.veerbhanushali.in`</li>
+            </ul>
+          </div>
+          <div style="padding-top:12px; border-top:1px solid #e2e8f0; font-size:0.75rem; color:var(--text-muted);">
+            Protected by HMAC-SHA256 JWT Session Tokens &amp; Role-Based Access Control (`CISO`, `SecOps`, `PKI Admin`, `Auditor`).
+          </div>
+        </div>
+
+        <div class="mkt-card" style="border-color:var(--purple);">
+          <div class="sub-nav" style="width:100%; display:flex; margin-bottom:14px;">
+            <button class="sub-btn active" id="tab-btn-login" style="flex:1;" onclick="switchAuthTab('login')">Sign In</button>
+            <button class="sub-btn" id="tab-btn-register" style="flex:1;" onclick="switchAuthTab('register')">Create Account (RBAC)</button>
+          </div>
+
+          <!-- Sign In Form -->
+          <div id="auth-form-login">
+            <div style="margin-bottom:10px;">
+              <label style="font-size:0.76rem; font-weight:700; color:var(--text-secondary);">Work or Personal Email</label>
+              <input type="text" id="login-email" placeholder="you@company.com" style="margin-top:4px;" />
+            </div>
+            <div style="margin-bottom:14px;">
+              <label style="font-size:0.76rem; font-weight:700; color:var(--text-secondary);">Password</label>
+              <input type="password" id="login-password" placeholder="••••••••" style="width:100%; background:#fff; border:1.5px solid #cbd5e1; padding:8px 11px; border-radius:9px; margin-top:4px;" onkeydown="if(event.key==='Enter')submitLogin()" />
+            </div>
+            <button class="btn btn-purple" style="width:100%; padding:10px;" onclick="submitLogin()">
+              &#128274; Sign In &amp; Open Full Enterprise Dashboard &rarr;
+            </button>
+          </div>
+
+          <!-- Sign Up Form with Role Selection -->
+          <div id="auth-form-register" style="display:none;">
+            <div style="margin-bottom:8px;">
+              <label style="font-size:0.75rem; font-weight:700; color:var(--text-secondary);">Full Name</label>
+              <input type="text" id="reg-name" placeholder="Veer Bhanushali" style="margin-top:3px;" />
+            </div>
+            <div style="margin-bottom:8px;">
+              <label style="font-size:0.75rem; font-weight:700; color:var(--text-secondary);">Organization / Company</label>
+              <input type="text" id="reg-org" placeholder="Quantum Guard Lab" style="margin-top:3px;" />
+            </div>
+            <div style="margin-bottom:8px;">
+              <label style="font-size:0.75rem; font-weight:700; color:var(--text-secondary);">Enterprise Role (RBAC)</label>
+              <select id="reg-role" style="margin-top:3px;">
+                <option value="ciso">CISO / Executive Viewer (Read &amp; Reports)</option>
+                <option value="secops">SecOps / Discovery Analyst (Scan &amp; CBOM)</option>
+                <option value="pki_admin">PKI &amp; Crypto Administrator (Full Auto-Migrate &amp; CA)</option>
+                <option value="auditor">Compliance Auditor (NIST IR 8547 &amp; Audit Trail)</option>
+              </select>
+            </div>
+            <div style="margin-bottom:8px;">
+              <label style="font-size:0.75rem; font-weight:700; color:var(--text-secondary);">Email Address (For Resend Report Delivery)</label>
+              <input type="text" id="reg-email" placeholder="you@company.com" style="margin-top:3px;" />
+            </div>
+            <div style="margin-bottom:14px;">
+              <label style="font-size:0.75rem; font-weight:700; color:var(--text-secondary);">Password (min 6 chars)</label>
+              <input type="password" id="reg-password" placeholder="••••••••" style="width:100%; background:#fff; border:1.5px solid #cbd5e1; padding:8px 11px; border-radius:9px; margin-top:3px;" onkeydown="if(event.key==='Enter')submitRegister()" />
+            </div>
+            <button class="btn btn-green" style="width:100%; padding:10px;" onclick="submitRegister()">
+              &#10024; Create Account &amp; Unlock Full Dashboard &rarr;
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== STAGE 4: FULL 5-TAB ENTERPRISE WORKSPACE (UNLOCKED AFTER LOGIN) ==================== -->
+  <div class="app-layout saas-stage" id="stage-workspace">
     <!-- ==================== LEFT SIDEBAR (CLEAN CANVA-STYLE SHELL) ==================== -->
     <aside class="sidebar">
       <div>
-        <div class="brand">
+        <div class="brand" style="cursor:pointer;" onclick="switchSaaSStage('marketing')" title="Back to Marketing Page">
           <div class="brand-orb">QG</div>
           <div>
             <h1>Quantum Guard</h1>
@@ -891,72 +1195,7 @@
     </main>
   </div>
 
-  <!-- ==================== GLASSMORPHIC AUTH & RBAC MODAL (SUPABASE BACKED) ==================== -->
-  <div id="auth-modal" style="display:none; position:fixed; inset:0; z-index:9000; background:rgba(15,23,42,0.38); backdrop-filter:blur(10px); align-items:center; justify-content:center; padding:16px;">
-    <div style="background:#ffffff; border:1.5px solid var(--purple); border-radius:20px; width:100%; max-width:440px; padding:24px; box-shadow:0 24px 60px rgba(15,23,42,0.22); position:relative;">
-      <button onclick="closeAuthModal()" style="position:absolute; top:14px; right:16px; background:#fff; border:1px solid #cbd5e1; border-radius:8px; width:28px; height:28px; cursor:pointer; font-weight:800; color:#64748b;">&times;</button>
-      <div style="display:flex; align-items:center; gap:10px; margin-bottom:6px;">
-        <div class="brand-orb" style="width:32px; height:32px; font-size:0.8rem;">QG</div>
-        <div>
-          <h3 style="font-size:1.05rem; font-weight:800; margin:0;">Quantum Guard SaaS Identity</h3>
-          <div style="font-size:0.72rem; color:var(--text-muted);">quantumguard-lab.veerbhanushali.in · Supabase Cloud</div>
-        </div>
-      </div>
-      <p id="auth-modal-reason" style="font-size:0.78rem; color:var(--purple); font-weight:600; margin-bottom:12px;">
-        Sign in or create a free account to unlock full Executive PDF Reports &amp; Resend email delivery.
-      </p>
-
-      <div class="sub-nav" style="width:100%; display:flex; margin-bottom:14px;">
-        <button class="sub-btn active" id="tab-btn-login" style="flex:1;" onclick="switchAuthTab('login')">Sign In</button>
-        <button class="sub-btn" id="tab-btn-register" style="flex:1;" onclick="switchAuthTab('register')">Create Account (RBAC)</button>
-      </div>
-
-      <!-- Sign In Form -->
-      <div id="auth-form-login">
-        <div style="margin-bottom:10px;">
-          <label style="font-size:0.75rem; font-weight:700; color:var(--text-secondary);">Work or Personal Email</label>
-          <input type="text" id="login-email" placeholder="you@company.com" style="margin-top:4px;" />
-        </div>
-        <div style="margin-bottom:14px;">
-          <label style="font-size:0.75rem; font-weight:700; color:var(--text-secondary);">Password</label>
-          <input type="password" id="login-password" placeholder="••••••••" style="width:100%; background:#fff; border:1.5px solid #cbd5e1; padding:7px 11px; border-radius:9px; margin-top:4px;" onkeydown="if(event.key==='Enter')submitLogin()" />
-        </div>
-        <button class="btn btn-purple" style="width:100%; padding:10px;" onclick="submitLogin()">&#128274; Sign In &amp; Unlock Reports</button>
-      </div>
-
-      <!-- Sign Up Form with Role Selection -->
-      <div id="auth-form-register" style="display:none;">
-        <div style="margin-bottom:8px;">
-          <label style="font-size:0.75rem; font-weight:700; color:var(--text-secondary);">Full Name</label>
-          <input type="text" id="reg-name" placeholder="Veer Bhanushali" style="margin-top:3px;" />
-        </div>
-        <div style="margin-bottom:8px;">
-          <label style="font-size:0.75rem; font-weight:700; color:var(--text-secondary);">Organization / Company</label>
-          <input type="text" id="reg-org" placeholder="Acme FinTech / Hospital" style="margin-top:3px;" />
-        </div>
-        <div style="margin-bottom:8px;">
-          <label style="font-size:0.75rem; font-weight:700; color:var(--text-secondary);">Enterprise Role (RBAC)</label>
-          <select id="reg-role" style="margin-top:3px;">
-            <option value="ciso">CISO / Executive Viewer (Read &amp; Reports)</option>
-            <option value="secops">SecOps / Discovery Analyst (Scan &amp; CBOM)</option>
-            <option value="pki_admin">PKI &amp; Crypto Administrator (Full Auto-Migrate &amp; CA)</option>
-            <option value="auditor">Compliance Auditor (NIST IR 8547 &amp; Audit Trail)</option>
-          </select>
-        </div>
-        <div style="margin-bottom:8px;">
-          <label style="font-size:0.75rem; font-weight:700; color:var(--text-secondary);">Email Address (For Resend Report Delivery)</label>
-          <input type="text" id="reg-email" placeholder="you@company.com" style="margin-top:3px;" />
-        </div>
-        <div style="margin-bottom:14px;">
-          <label style="font-size:0.75rem; font-weight:700; color:var(--text-secondary);">Password (min 6 chars)</label>
-          <input type="password" id="reg-password" placeholder="••••••••" style="width:100%; background:#fff; border:1.5px solid #cbd5e1; padding:7px 11px; border-radius:9px; margin-top:3px;" onkeydown="if(event.key==='Enter')submitRegister()" />
-        </div>
-        <button class="btn btn-green" style="width:100%; padding:10px;" onclick="submitRegister()">&#10024; Create Account in Supabase &amp; Unlock</button>
-      </div>
-    </div>
-  </div>
-
   <div id="toast-container"></div>
-  <script src="/static/app.js?v=10"></script>
+  <script src="/static/app.js?v=12"></script>
 </body>
 </html>
