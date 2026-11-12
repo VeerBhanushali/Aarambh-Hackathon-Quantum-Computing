@@ -1279,7 +1279,7 @@ function renderLiveResult(r) {
         <h3 style="margin:0;">${escapeHtml(r.host)}</h3>
         <span class="badge ${badge}">${escapeHtml(r.verdict)}${unknown ? "" : ` · risk ${r.score}`}</span>
       </div>
-      ${r.warning ? `<p style="color:var(--purple); margin-top:8px; font-size:0.8rem;">&#9888;&#65039; ${escapeHtml(r.warning)}</p>` : ""}
+      ${r.warning ? `<p style="color:var(--purple); margin-top:8px; font-size:0.8rem;">${escapeHtml(r.warning)}</p>` : ""}
       <ul style="margin-top:8px; padding-left:18px; font-size:0.8rem;">${(r.reasons || []).map((x) => `<li>${escapeHtml(x)}</li>`).join("")}</ul>
       <div class="table-wrap" style="margin-top:8px;"><table>
         <thead><tr><th>Probe</th><th>Offered</th><th>Negotiated</th><th>Handshake</th></tr></thead>
@@ -1318,7 +1318,7 @@ async function runLiveScan() {
     showToast(`Live scan: ${e.message}`, true);
   } finally {
     btn.disabled = false;
-    btn.innerHTML = "&#127760; Scan Live";
+    btn.innerHTML = "Scan Live";
   }
 }
 
