@@ -37,7 +37,7 @@ export function getSupabaseConfig() {
   loadEnvFiles();
   let rawWorker = (process.env.OPENSSL_WORKER_URL || "").replace(/\/$/, "");
   if (!rawWorker || rawWorker.includes("quantumguard-openssl-worker.onrender.com")) {
-    rawWorker = "https://destinations-notebooks-joy-discounted.trycloudflare.com";
+    rawWorker = "https://quantumguard-backend.veerbhanushali.in";
   }
   return {
     url: (process.env.SUPABASE_URL || "https://irjstudhbbjtnxqulriw.supabase.co").replace(/\/$/, ""),
