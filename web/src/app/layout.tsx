@@ -5,6 +5,11 @@ export const metadata: Metadata = {
   title: "Quantum Guard — Post-Quantum Cryptography Assessment & Migration Platform",
   description:
     "Full-Stack Next.js SaaS & Enterprise PQC Assessment, CycloneDX 1.6 CBOM, Mosca HNDL Risk Scoring, and NIST FIPS 203/204/205 Migration Platform (quantumguard-lab.veerbhanushali.in).",
+  icons: {
+    icon: [{ url: "/favicon.svg", type: "image/svg+xml" }, { url: "/brand/icon-512.png", sizes: "512x512", type: "image/png" }],
+    apple: "/brand/apple-touch-icon.png",
+  },
+  openGraph: { images: ["/brand/icon-512.png"] },
 };
 
 export default function RootLayout({
