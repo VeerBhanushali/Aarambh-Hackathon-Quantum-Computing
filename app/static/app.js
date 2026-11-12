@@ -1391,9 +1391,344 @@ async function runQDay() {
   }
 }
 
+// ==================== SAAS AUTH (RBAC), SUPABASE & TARGET SCANNER ====================
+let currentUser = null;
+let authToken = localStorage.getItem("qg_auth_token") || "";
+let latestTargetScan = null;
+let pendingPostAuthAction = null;
+
+function authHeaders() {
+  const h = { "Content-Type": "application/json" };
+  if (authToken) h["Authorization"] = `Bearer ${authToken}`;
+  return h;
+}
+
+async function loadSaaSStatus() {
+  try {
+    const res = await fetch("/api/saas/status", { headers: authHeaders() }).then((r) => r.json());
+    const sbBadge = document.getElementById("supabase-badge");
+    if (sbBadge) {
+      sbBadge.className = `badge ${res.supabase_connected ? "sev-ok" : "sev-medium"}`;
+      sbBadge.innerHTML = res.supabase_connected ? "&#9679; Supabase Cloud" : "&#9679; Local DB";
+    }
+    if (res.authenticated && res.user) {
+      currentUser = res.user;
+    } else {
+      currentUser = null;
+    }
+    renderAuthTopBar();
+  } catch (e) {}
+}
+
+function renderAuthTopBar() {
+  const area = document.getElementById("auth-bar-area");
+  if (!area) return;
+  if (currentUser) {
+    area.innerHTML = `
+      <span class="badge sev-medium" title="${escapeHtml(currentUser.organization)}">${escapeHtml(currentUser.role_label)}</span>
+      <span style="font-size:0.76rem; font-weight:700; color:var(--text-main);">${escapeHtml(currentUser.full_name || currentUser.email)}</span>
+      <button class="btn btn-outline btn-sm" onclick="logoutSaaS()">Sign Out</button>
+    `;
+  } else {
+    area.innerHTML = `
+      <button class="btn btn-purple btn-sm" id="btn-open-auth" onclick="openAuthModal('login')">&#128274; Sign In / Sign Up</button>
+    `;
+  }
+  if (latestTargetScan) renderSaaSTargetResult(latestTargetScan);
+}
+
+function openAuthModal(tab = "login", reasonMsg = null, afterCallback = null) {
+  pendingPostAuthAction = afterCallback;
+  const modal = document.getElementById("auth-modal");
+  if (!modal) return;
+  const reasonEl = document.getElementById("auth-modal-reason");
+  if (reasonEl) {
+    reasonEl.textContent =
+      reasonMsg ||
+      "Sign in or create a free account to unlock full Executive PDF Reports & Resend email delivery.";
+  }
+  modal.style.display = "flex";
+  switchAuthTab(tab);
+}
+
+function closeAuthModal() {
+  const modal = document.getElementById("auth-modal");
+  if (modal) modal.style.display = "none";
+}
+
+function switchAuthTab(tab) {
+  document.getElementById("tab-btn-login").classList.toggle("active", tab === "login");
+  document.getElementById("tab-btn-register").classList.toggle("active", tab === "register");
+  document.getElementById("auth-form-login").style.display = tab === "login" ? "block" : "none";
+  document.getElementById("auth-form-register").style.display = tab === "register" ? "block" : "none";
+}
+
+async function submitLogin() {
+  const email = document.getElementById("login-email").value.trim();
+  const password = document.getElementById("login-password").value;
+  try {
+    const raw = await fetch("/api/auth/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password }),
+    });
+    const res = await raw.json();
+    if (!raw.ok || res.error) throw new Error(res.message || "Login failed");
+    authToken = res.token;
+    currentUser = res.user;
+    localStorage.setItem("qg_auth_token", authToken);
+    closeAuthModal();
+    renderAuthTopBar();
+    showToast(`Welcome back, ${currentUser.full_name} (${currentUser.role_label})!`);
+    if (pendingPostAuthAction) {
+      const fn = pendingPostAuthAction;
+      pendingPostAuthAction = null;
+      fn();
+    }
+  } catch (err) {
+    showToast(err.message, true);
+  }
+}
+
+async function submitRegister() {
+  const full_name = document.getElementById("reg-name").value.trim();
+  const organization = document.getElementById("reg-org").value.trim();
+  const role = document.getElementById("reg-role").value;
+  const email = document.getElementById("reg-email").value.trim();
+  const password = document.getElementById("reg-password").value;
+  try {
+    const raw = await fetch("/api/auth/register", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password, full_name, organization, role }),
+    });
+    const res = await raw.json();
+    if (!raw.ok || res.error) throw new Error(res.message || "Registration failed");
+    authToken = res.token;
+    currentUser = res.user;
+    localStorage.setItem("qg_auth_token", authToken);
+    closeAuthModal();
+    renderAuthTopBar();
+    showToast(`Account created in Supabase as ${currentUser.role_label}!`);
+    if (pendingPostAuthAction) {
+      const fn = pendingPostAuthAction;
+      pendingPostAuthAction = null;
+      fn();
+    }
+  } catch (err) {
+    showToast(err.message, true);
+  }
+}
+
+function logoutSaaS() {
+  authToken = "";
+  currentUser = null;
+  localStorage.removeItem("qg_auth_token");
+  renderAuthTopBar();
+  showToast("Signed out of Quantum Guard SaaS.");
+}
+
+async function runSaaSTargetScan() {
+  const inputEl = document.getElementById("saas-target-input");
+  const rawTarget = (inputEl ? inputEl.value : "").trim();
+  if (!rawTarget) {
+    showToast("Enter a target domain first (e.g. cloudflare.com, google.com, or veerbhanushali.in).", true);
+    if (inputEl) inputEl.focus();
+    return;
+  }
+
+  switchTab("pipeline");
+  const btn = document.getElementById("btn-saas-scan");
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = "Scanning Target...";
+  }
+
+  try {
+    // Animate the 7-Node DAG for the user's target domain!
+    setGraphStageBanner(`Probing Target '${rawTarget}' via OpenSSL 3.5 TLS 1.3 PQC & Classical Handshakes...`, "purple");
+    setDagNode(1, "complete", "Target Set", `Target locked: ${rawTarget} (port 443 TLS 1.3 probe initialized).`);
+    setDagNode(2, "feedback", "Probing 443", `Probing ${rawTarget}:443 with X25519MLKEM768 + classical X25519...`);
+    setDagNode(3, "active", "Cert Gate", `Inspecting leaf X.509 signature algorithm & TLS 1.2 fallback on ${rawTarget}...`);
+    setDagNode(4, "active", "Indexing...", `Building cryptographic profile & Supabase record for ${rawTarget}...`);
+    setDagEdge("dag-edge-1-2", "complete");
+    setDagEdge("dag-edge-1-3", "complete");
+    setDagEdge("dag-edge-loop", "feedback");
+    setDagEdge("dag-edge-2-4", "active");
+    setDagEdge("dag-edge-3-4", "active");
+    selectDagNode(2);
+    logGraphEvent("TARGET-SCAN", `Initiated live TLS 1.3 PQC handshake scan against ${rawTarget}:443...`, "purple");
+
+    const raw = await fetch("/api/saas/scan-target", {
+      method: "POST",
+      headers: authHeaders(),
+      body: JSON.stringify({ target: rawTarget }),
+    });
+    const res = await raw.json();
+    if (!raw.ok || res.error) throw new Error(res.message || `Scan failed (${raw.status})`);
+
+    latestTargetScan = res;
+    const isPqc = res.kex_status === "hybrid";
+    const kexGroup = (res.pqc_probe && res.pqc_probe.negotiated_group) || "unknown";
+    const certAlg = (res.certificate && res.certificate.signature_algorithm) || "unknown";
+
+    setDagNode(2, "complete", `${res.pqc_probe.handshake_ms}ms`, `Target ${res.host} negotiated ${kexGroup} in ${res.pqc_probe.handshake_ms}ms.`);
+    setDagNode(3, isPqc ? "complete" : "feedback", certAlg, `Certificate uses ${certAlg}; TLS 1.2 accepted: ${res.tls12_accepted ? "Yes" : "No"}.`);
+    setDagNode(4, "complete", "Supabase OK", `Saved target scan #${res.scan_record_id} for ${res.host} to Supabase PostgreSQL.`);
+    setDagNode(5, isPqc ? "complete" : "active", "Wave 2 PKI", `Recommended leaf upgrade: ML-DSA-65 Dual-Cert for ${res.host}.`);
+    setDagNode(6, isPqc ? "complete" : "alert", kexGroup, isPqc ? `${res.host} already supports X25519MLKEM768!` : `Action needed: Enable X25519MLKEM768 on ${res.host}.`);
+    setDagNode(
+      7,
+      isPqc ? "complete" : "alert",
+      `${res.readiness_score}% Ready`,
+      `Verdict for ${res.host}: ${res.verdict} (Quantum Readiness: ${res.readiness_score}%).`
+    );
+
+    setDagEdge("dag-edge-2-4", "complete");
+    setDagEdge("dag-edge-3-4", "complete");
+    setDagEdge("dag-edge-4-5", "complete");
+    setDagEdge("dag-edge-4-6", isPqc ? "complete" : "alert");
+    setDagEdge("dag-edge-5-7", "complete");
+    setDagEdge("dag-edge-6-7", isPqc ? "complete" : "alert");
+    selectDagNode(7);
+
+    setGraphStageBanner(
+      `Target Scan Complete: ${res.host} — ${res.verdict} (Readiness: ${res.readiness_score}%)`,
+      isPqc ? "green" : "red"
+    );
+    logGraphEvent(
+      "SUPABASE",
+      `Scan saved for ${res.host}: KEX=${kexGroup}, Cert=${certAlg}, Readiness=${res.readiness_score}%.`,
+      isPqc ? "green" : "red"
+    );
+
+    renderSaaSTargetResult(res);
+    showToast(`Scan complete for ${res.host} (${res.verdict})!`);
+  } catch (err) {
+    setGraphStageBanner(`Target Scan Error: ${err.message}`, "red");
+    logGraphEvent("ERROR", err.message, "red");
+    showToast(`Scan Error: ${err.message}`, true);
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = "&#127760; Scan Target";
+    }
+  }
+}
+
+function renderSaaSTargetResult(scan) {
+  const bar = document.getElementById("saas-target-result-bar");
+  if (!bar || !scan) return;
+  const isPqc = scan.kex_status === "hybrid";
+  const kex = (scan.pqc_probe && scan.pqc_probe.negotiated_group) || "unknown";
+  const certAlg = (scan.certificate && scan.certificate.signature_algorithm) || "unknown";
+  const lockIcon = currentUser ? "&#128196;" : "&#128274;";
+  const mailIcon = currentUser ? "&#9993;&#65039;" : "&#128274;";
+
+  bar.style.display = "block";
+  bar.innerHTML = `
+    <div style="background:#ffffff; border:1.5px solid ${isPqc ? "var(--green)" : "var(--red)"}; border-radius:14px; padding:12px 16px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; box-shadow:0 8px 24px rgba(15,23,42,0.06);">
+      <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+        <span class="badge ${isPqc ? "sev-ok" : "sev-critical"}">${escapeHtml(scan.verdict)}</span>
+        <div>
+          <div style="font-size:0.9rem; font-weight:800; color:var(--text-main);">
+            Target: <code>${escapeHtml(scan.host)}</code> &middot; Quantum Readiness: <span style="color:${isPqc ? "var(--green)" : "var(--red)"};">${scan.readiness_score}%</span>
+          </div>
+          <div style="font-size:0.75rem; color:var(--text-secondary);">
+            Negotiated KEM: <b>${escapeHtml(kex)}</b> &middot; Certificate: <b>${escapeHtml(certAlg)}</b> &middot; TLS 1.2 Fallback: <b>${scan.tls12_accepted ? "Accepted" : "Disabled"}</b>
+          </div>
+        </div>
+      </div>
+      <div style="display:flex; gap:8px; flex-wrap:wrap;">
+        <button class="btn btn-blue btn-sm" onclick="openProtectedTargetReport()">
+          ${lockIcon} ${currentUser ? "Open Full PQC Report (PDF)" : "Login to Unlock Full Report"}
+        </button>
+        <button class="btn btn-purple btn-sm" onclick="emailTargetReportViaResend()">
+          ${mailIcon} ${currentUser ? `Email Report (${escapeHtml(currentUser.email)})` : "Login to Email Report"}
+        </button>
+      </div>
+    </div>
+  `;
+}
+
+async function openProtectedTargetReport() {
+  if (!latestTargetScan) {
+    return openProtectedEnterpriseReport();
+  }
+  if (!currentUser || !authToken) {
+    return openAuthModal(
+      "login",
+      `Sign in or create an account to unlock the full Post-Quantum Report for ${latestTargetScan.host}.`,
+      () => openProtectedTargetReport()
+    );
+  }
+  try {
+    const raw = await fetch("/api/saas/report-html", {
+      method: "POST",
+      headers: authHeaders(),
+      body: JSON.stringify({ scan_data: latestTargetScan }),
+    });
+    if (raw.status === 401) {
+      logoutSaaS();
+      return openAuthModal("login", "Session expired. Please sign in to view your report.");
+    }
+    const htmlDoc = await raw.text();
+    const win = window.open("", "_blank");
+    if (win) {
+      win.document.open();
+      win.document.write(htmlDoc);
+      win.document.close();
+    }
+  } catch (err) {
+    showToast(`Report Error: ${err.message}`, true);
+  }
+}
+
+async function emailTargetReportViaResend() {
+  if (!latestTargetScan) {
+    showToast("Scan a target domain first so we can email its report!", true);
+    return;
+  }
+  if (!currentUser || !authToken) {
+    return openAuthModal(
+      "login",
+      `Sign in or create an account to email the PQC Report for ${latestTargetScan.host} via Resend.`,
+      () => emailTargetReportViaResend()
+    );
+  }
+  try {
+    showToast(`Sending PQC Report for ${latestTargetScan.host} to ${currentUser.email}...`);
+    const raw = await fetch("/api/saas/report-email", {
+      method: "POST",
+      headers: authHeaders(),
+      body: JSON.stringify({ to_email: currentUser.email, scan_data: latestTargetScan }),
+    });
+    const res = await raw.json();
+    if (!raw.ok || res.error) throw new Error(res.message || "Email failed");
+    showToast(res.message);
+    if (!res.resend_configured) {
+      await openProtectedTargetReport();
+    }
+  } catch (err) {
+    showToast(err.message, true);
+  }
+}
+
+function openProtectedEnterpriseReport() {
+  if (!currentUser || !authToken) {
+    return openAuthModal(
+      "login",
+      "Sign in or create an account to unlock & download the Executive PDF Compliance Report.",
+      () => window.open("/api/report", "_blank")
+    );
+  }
+  window.open("/api/report", "_blank");
+}
+
 window.addEventListener("DOMContentLoaded", async () => {
   const tlDate = document.getElementById("tl-today-date");
   if (tlDate) tlDate.textContent = new Date().toLocaleDateString(undefined, { year: "numeric", month: "long" });
+  await loadSaaSStatus();
   loadLiveSuggestions();
   await refreshAll();
   await runHybridLab();

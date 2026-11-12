@@ -4,3 +4,15 @@ venv/
 __pycache__/
 *.pyc
 .pytest_cache/
+.env
+.env.local
+!.env.example
+node_modules/
+web/node_modules/
+web/.next/
+web/out/
+web/.env
+web/.env.local
+!web/.env.example
+next-env.d.ts
+web/next-env.d.ts

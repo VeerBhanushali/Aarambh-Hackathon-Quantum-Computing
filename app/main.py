@@ -563,3 +563,129 @@ def api_executive_report() -> HTMLResponse:
 </body>
 </html>"""
     return HTMLResponse(html)
+
+
+# ==============================================================================
+# SAAS AUTH (RBAC), SUPABASE CLOUD PERSISTENCE & RESEND EMAIL REPORT ENDPOINTS
+# ==============================================================================
+from app.saas import (
+    ensure_saas_local_tables,
+    list_recent_target_scans,
+    login_user,
+    register_user,
+    render_target_report_html,
+    scan_and_store_target,
+    send_report_via_resend,
+    supabase_status,
+    verify_session_token,
+)
+
+
+class AuthRegisterRequest(BaseModel):
+    email: str
+    password: str
+    full_name: str = ""
+    organization: str = ""
+    role: str = "ciso"
+
+
+class AuthLoginRequest(BaseModel):
+    email: str
+    password: str
+
+
+class SaaSTargetScanRequest(BaseModel):
+    target: str
+
+
+class SaaSReportEmailRequest(BaseModel):
+    to_email: str = ""
+    scan_data: Dict[str, Any]
+
+
+def _extract_user_from_request(request: Request) -> Optional[Dict[str, Any]]:
+    auth_header = request.headers.get("Authorization") or request.query_params.get("token")
+    return verify_session_token(auth_header)
+
+
+@app.get("/api/saas/status")
+def api_saas_status(request: Request) -> Dict[str, Any]:
+    ensure_saas_local_tables()
+    user = _extract_user_from_request(request)
+    return {
+        **supabase_status(),
+        "authenticated": user is not None,
+        "user": user,
+    }
+
+
+@app.post("/api/auth/register")
+def api_auth_register(req: AuthRegisterRequest) -> JSONResponse:
+    try:
+        res = register_user(
+            email=req.email,
+            password=req.password,
+            full_name=req.full_name,
+            organization=req.organization,
+            role=req.role,
+        )
+        return JSONResponse(res)
+    except ValueError as exc:
+        return JSONResponse({"error": True, "message": str(exc)}, status_code=400)
+
+
+@app.post("/api/auth/login")
+def api_auth_login(req: AuthLoginRequest) -> JSONResponse:
+    try:
+        res = login_user(email=req.email, password=req.password)
+        return JSONResponse(res)
+    except ValueError as exc:
+        return JSONResponse({"error": True, "message": str(exc)}, status_code=401)
+
+
+@app.get("/api/auth/me")
+def api_auth_me(request: Request) -> JSONResponse:
+    user = _extract_user_from_request(request)
+    if not user:
+        return JSONResponse({"authenticated": False, "user": None}, status_code=401)
+    return JSONResponse({"authenticated": True, "user": user})
+
+
+@app.post("/api/saas/scan-target")
+def api_saas_scan_target(req: SaaSTargetScanRequest, request: Request) -> JSONResponse:
+    user = _extract_user_from_request(request)
+    try:
+        result = scan_and_store_target(req.target, user=user)
+        return JSONResponse(result)
+    except ValueError as exc:
+        return JSONResponse({"error": True, "message": str(exc)}, status_code=400)
+
+
+@app.get("/api/saas/scans")
+def api_saas_scans(limit: int = Query(15)) -> Dict[str, Any]:
+    return {"scans": list_recent_target_scans(limit=limit)}
+
+
+@app.post("/api/saas/report-html", response_class=HTMLResponse)
+def api_saas_report_html(req: SaaSReportEmailRequest, request: Request) -> HTMLResponse:
+    user = _extract_user_from_request(request)
+    if not user:
+        return HTMLResponse("<h3>Authentication Required: Please Sign In to unlock the full PQC Report.</h3>", status_code=401)
+    html_doc = render_target_report_html(req.scan_data, user)
+    return HTMLResponse(html_doc)
+
+
+@app.post("/api/saas/report-email")
+def api_saas_report_email(req: SaaSReportEmailRequest, request: Request) -> JSONResponse:
+    user = _extract_user_from_request(request)
+    if not user:
+        return JSONResponse(
+            {"error": True, "auth_required": True, "message": "Please Sign In or Create a Free Account to unlock & email your PQC Readiness Report."},
+            status_code=401,
+        )
+    try:
+        result = send_report_via_resend(req.to_email or user["email"], req.scan_data, user)
+        return JSONResponse(result)
+    except Exception as exc:
+        return JSONResponse({"error": True, "message": str(exc)}, status_code=400)
+
